@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HEX CORE - 雙人對決</title>
+  <style>
+    :root {
+      --bg-color: #030712;
+      --card-bg: rgba(17, 24, 39, 0.85);
+      --text-color: #f3f4f6;
+      --neon-blue: #00f0ff;
+      --neon-blue-glow: rgba(0, 240, 255, 0.4);
+      --blue-dark: #0284c7;
+      --neon-red: #ff0055;
+      --neon-red-glow: rgba(255, 0, 85, 0.4);
+      --red-dark: #be123c;
+      --cyber-border: #374151;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 60%),
+        linear-gradient(to right, rgba(31, 41, 55, 0.2) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(31, 41, 55, 0.2) 1px, transparent 1px);
+      background-size: 100% 100%, 30px 30px, 30px 30px;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 950px;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .cyber-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--cyber-border);
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cyber-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-blue), var(--neon-red), transparent);
+    }
+
+    /* 首頁 */
+    .home-card {
+      padding: 40px 30px;
+      text-align: center;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      letter-spacing: 3px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-red));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    }
+
+    p.subtitle {
+      color: #9ca3af;
+      margin-bottom: 30px;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(0,150,255,0.4));
+      color: #ffffff;
+      border: 1px solid var(--neon-blue);
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      box-shadow: 0 0 15px var(--neon-blue-glow);
+    }
+
+    .btn:hover {
+      background: var(--neon-blue);
+      color: #000;
+      box-shadow: 0 0 25px var(--neon-blue);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: rgba(31, 41, 55, 0.8);
+      color: #e5e7eb;
+      border: 1px solid #4b5563;
+      padding: 12px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #374151;
+      border-color: #9ca3af;
+    }
+
+    /* 遊戲 Header */
+    .game-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 15px 20px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .player-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .board-container {
+      padding: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+    }
+
+    canvas {
+      display: block;
+      cursor: pointer;
+    }
+
+    /* 彈出視窗 Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      padding: 30px;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+    }
+
+    /* === 超立體 3D 硬幣樣式 === */
+    .coin-wrapper {
+      perspective: 1200px;
+      width: 140px;
+      height: 140px;
+      margin: 30px auto;
+      position: relative;
+    }
+
+    .coin-shadow {
+      position: absolute;
+      bottom: -20px;
+      left: 15%;
+      width: 70%;
+      height: 16px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      filter: blur(8px);
+      transition: all 3s cubic-bezier(0.15, 0.85, 0.35, 1.2);
+    }
+
+    .coin {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 3.5s cubic-bezier(0.15, 0.85, 0.35, 1.15);
+    }
+
+    /* 正反面金屬質感 */
+    .coin-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      box-shadow: 
+        inset 0 0 15px rgba(255,255,255,0.4),
+        inset 0 0 30px rgba(0,0,0,0.6);
+    }
+
+    .coin-face::after {
+      content: '';
+      position: absolute;
+      top: 6px; left: 6px; right: 6px; bottom: 6px;
+      border-radius: 50%;
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      pointer-events: none;
+    }
+
+    .coin-blue {
+      background: radial-gradient(circle at 35% 35%, #60a5fa 0%, #0284c7 50%, #0369a1 100%);
+      border: 5px solid #00f0ff;
+      transform: translateZ(6px);
+    }
+
+    .coin-red {
+      background: radial-gradient(circle at 35% 35%, #f87171 0%, #be123c 50%, #881337 100%);
+      border: 5px solid #ff0055;
+      transform: rotateY(180deg) translateZ(6px);
+    }
+
+    /* 3D 硬幣側邊厚度堆疊層 */
+    .coin-side {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #475569;
+      border: 4px solid #334155;
+    }
+
+    .modal-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 首頁 Screen -->
+  <div id="home-screen" class="screen active">
+    <div class="cyber-card home-card">
+      <h1>HEX CORE</h1>
+      <p class="subtitle">// 雙人線下對決 11x11 (ABBA 雙步規則)</p>
+      <button class="btn" id="start-btn">開始遊戲</button>
+    </div>
+  </div>
+
+  <!-- 遊戲主畫面 Screen -->
+  <div id="game-screen" class="screen">
+    <div class="cyber-card game-header">
+      <div class="status-badge">
+        <span id="turn-indicator" class="player-indicator"></span>
+        <span id="status-text">準備開局...</span>
+      </div>
+      <div>
+        <button id="home-btn" class="btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">返回首頁</button>
+      </div>
+    </div>
+
+    <div class="cyber-card board-container">
+      <canvas id="hexCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- 投硬幣 Modal -->
+  <div id="coin-modal" class="modal-overlay">
+    <div class="cyber-card modal-card">
+      <h2 style="letter-spacing: 2px;">立體硬幣抽籤</h2>
+      <div class="coin-wrapper">
+        <div id="coin-shadow" class="coin-shadow"></div>
+        <div id="coin" class="coin">
+          <!-- 側邊立體厚度層 -->
+          <div class="coin-side" style="transform: translateZ(4px);"></div>
+          <div class="coin-side" style="transform: translateZ(2px);"></div>
+          <div class="coin-side" style="transform: translateZ(0px);"></div>
+          <div class="coin-side" style="transform: translateZ(-2px);"></div>
+          <div class="coin-side" style="transform: translateZ(-4px);"></div>
+          
+          <!-- 正反面 -->
+          <div class="coin-face coin-blue">
+            <span>A 方</span>
+            <span style="font-size: 0.75rem; color: #e0f2fe; margin-top: 2px;">(藍色)</span>
+          </div>
+          <div class="coin-face coin-red">
+            <span>B 方</span>
+            <span style="font-size: 0.75rem; color: #ffe4e6; margin-top: 2px;">(紅色)</span>
+          </div>
+        </div>
+      </div>
+      <p id="coin-result-text" style="font-weight: bold; font-size: 1rem; color: #9ca3af; min-height: 24px;"></p>
+      <button id="coin-start-btn" class="btn" style="margin-top: 15px; display: none;">進入對局</button>
+    </div>
+  </div>
+
+  <!-- 結算 Modal -->
+  <div id="result-modal" class="modal-overlay">
+    <div class="cyber-card modal-card">
+      <h2 id="winner-title" style="font-size: 1.8rem; margin-bottom: 10px;"></h2>
+      <p id="winner-sub" style="color: #9ca3af; margin-bottom: 25px; font-size: 0.9rem;"></p>
+      
+      <div class="modal-btns">
+        <button id="download-btn" class="btn">下載過程圖片</button>
+        <button id="restart-btn" class="btn-secondary">再玩一次</button>
+        <button id="back-home-btn" class="btn-secondary">返回首頁</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BOARD_SIZE = 11;
+    const HEX_RADIUS = 22;
+    const SQRT3 = Math.sqrt(3);
+
+    let board = [];
+    let moveHistory = [];
+    let stepCount = 0;
+    
+    let startingPlayer = 1;
+    let currentPlayer = 1;
+    let movesLeftInTurn = 1; 
+    let isGameOver = false;
+
+    const canvas = document.getElementById('hexCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const homeScreen = document.getElementById('home-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const coinModal = document.getElementById('coin-modal');
+    const resultModal = document.getElementById('result-modal');
+    
+    const startBtn = document.getElementById('start-btn');
+    const coinStartBtn = document.getElementById('coin-start-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const backHomeBtn = document.getElementById('back-home-btn');
+    const homeBtn = document.getElementById('home-btn');
+
+    const statusText = document.getElementById('status-text');
+    const turnIndicator = document.getElementById('turn-indicator');
+
+    startBtn.addEventListener('click', () => {
+      homeScreen.classList.remove('active');
+      gameScreen.classList.add('active');
+      initAndTossCoin();
+    });
+
+    homeBtn.addEventListener('click', backToHome);
+    backHomeBtn.addEventListener('click', () => {
+      resultModal.classList.remove('active');
+      backToHome();
+    });
+
+    restartBtn.addEventListener('click', () => {
+      resultModal.classList.remove('active');
+      initAndTossCoin();
+    });
+
+    function backToHome() {
+      gameScreen.classList.remove('active');
+      homeScreen.classList.add('active');
+    }
+
+    function initAndTossCoin() {
+      board = Array(BOARD_SIZE).fill(0).map(() => Array(BOARD_SIZE).fill(0));
+      moveHistory = [];
+      stepCount = 0;
+      isGameOver = false;
+
+      coinModal.classList.add('active');
+      coinStartBtn.style.display = 'none';
+      document.getElementById('coin-result-text').innerText = '3D 硬幣空中旋轉中...';
+      
+      const coinEl = document.getElementById('coin');
+      const coinShadow = document.getElementById('coin-shadow');
+      coinEl.style.transform = 'rotateY(0deg) translateY(0px)';
+      coinShadow.style.transform = 'scale(1)';
+      coinShadow.style.opacity = '0.6';
+
+      const isA = Math.random() < 0.5;
+      startingPlayer = isA ? 1 : 2;
+      
+      const targetRotation = (isA ? 2160 : 2340); // 旋轉更多圈數更具立體感
+      
+      setTimeout(() => {
+        coinEl.style.transform = `rotateY(${targetRotation}deg) translateY(-20px)`;
+        coinShadow.style.transform = 'scale(0.6)';
+        coinShadow.style.opacity = '0.2';
+      }, 100);
+
+      setTimeout(() => {
+        coinEl.style.transform = `rotateY(${targetRotation}deg) translateY(0px)`;
+        coinShadow.style.transform = 'scale(1)';
+        coinShadow.style.opacity = '0.6';
+      }, 2800);
+
+      setTimeout(() => {
+        const name = startingPlayer === 1 ? 'A方 (藍色)' : 'B方 (紅色)';
+        document.getElementById('coin-result-text').innerText = `抽籤結果：由 ${name} 獲得先手！`;
+        coinStartBtn.style.display = 'block';
+      }, 3600);
+    }
+
+    coinStartBtn.addEventListener('click', () => {
+      coinModal.classList.remove('active');
+      currentPlayer = startingPlayer;
+      movesLeftInTurn = 1; 
+      
+      resizeCanvas();
+      drawBoard();
+      updateStatus();
+    });
+
+    function getHexCenter(r, c) {
+      const offsetX = 85;
+      const offsetY = 75;
+      const x = offsetX + (c + r * 0.5) * (HEX_RADIUS * SQRT3);
+      const y = offsetY + r * (HEX_RADIUS * 1.5);
+      return { x, y };
+    }
+
+    function resizeCanvas() {
+      canvas.width = 860;
+      canvas.height = 630;
+    }
+
+    function drawBoard(targetCtx = ctx) {
+      targetCtx.clearRect(0, 0, canvas.width, canvas.height);
+      targetCtx.fillStyle = '#0b0f19';
+      targetCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawBoardBorders(targetCtx);
+
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const { x, y } = getHexCenter(r, c);
+          const cellVal = board[r][c];
+          
+          let fillColor = '#111827';
+          let strokeColor = '#1f2937';
+
+          if (cellVal === 1) {
+            fillColor = '#00f0ff';
+            strokeColor = '#38bdf8';
+          } else if (cellVal === 2) {
+            fillColor = '#ff0055';
+            strokeColor = '#fb7185';
+          }
+
+          drawHexagon(targetCtx, x, y, HEX_RADIUS, fillColor, strokeColor, cellVal);
+
+          if (cellVal !== 0) {
+            const move = moveHistory.find(m => m.r === r && m.c === c);
+            if (move) {
+              targetCtx.fillStyle = (cellVal === 1) ? '#000000' : '#ffffff';
+              targetCtx.font = 'bold 12px sans-serif';
+              targetCtx.textAlign = 'center';
+              targetCtx.textBaseline = 'middle';
+              targetCtx.fillText(`${move.step}`, x, y);
+            }
+          }
+        }
+      }
+
+      drawLabels(targetCtx);
+    }
+
+    function drawHexagon(targetCtx, x, y, r, fillColor, strokeColor, cellVal) {
+      targetCtx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 180) * (60 * i + 30);
+        const hx = x + r * Math.cos(angle);
+        const hy = y + r * Math.sin(angle);
+        if (i === 0) targetCtx.moveTo(hx, hy);
+        else targetCtx.lineTo(hx, hy);
+      }
+      targetCtx.closePath();
+
+      if (cellVal !== 0) {
+        targetCtx.shadowColor = fillColor;
+        targetCtx.shadowBlur = 10;
+      } else {
+        targetCtx.shadowBlur = 0;
+      }
+
+      targetCtx.fillStyle = fillColor;
+      targetCtx.fill();
+      targetCtx.strokeStyle = strokeColor;
+      targetCtx.lineWidth = 1.5;
+      targetCtx.stroke();
+      targetCtx.shadowBlur = 0;
+    }
+
+    function drawBoardBorders(targetCtx) {
+      targetCtx.fillStyle = '#ff0055';
+      targetCtx.shadowColor = '#ff0055';
+      targetCtx.shadowBlur = 8;
+      targetCtx.beginPath();
+      let p1 = getHexCenter(0, 0);
+      let p2 = getHexCenter(0, 10);
+      targetCtx.moveTo(p1.x - HEX_RADIUS * SQRT3/2, p1.y - HEX_RADIUS - 2);
+      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2, p2.y - HEX_RADIUS - 2);
+      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2, p2.y - HEX_RADIUS/2 - 2);
+      targetCtx.lineTo(p1.x - HEX_RADIUS * SQRT3/2, p1.y - HEX_RADIUS/2 - 2);
+      targetCtx.fill();
+
+      targetCtx.beginPath();
+      p1 = getHexCenter(10, 0);
+      p2 = getHexCenter(10, 10);
+      targetCtx.moveTo(p1.x - HEX_RADIUS * SQRT3/2, p1.y + HEX_RADIUS/2 + 2);
+      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2, p2.y + HEX_RADIUS/2 + 2);
+      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2, p2.y + HEX_RADIUS + 2);
+      targetCtx.lineTo(p1.x - HEX_RADIUS * SQRT3/2, p1.y + HEX_RADIUS + 2);
+      targetCtx.fill();
+
+      targetCtx.fillStyle = '#00f0ff';
+      targetCtx.shadowColor = '#00f0ff';
+      targetCtx.beginPath();
+      p1 = getHexCenter(0, 0);
+      p2 = getHexCenter(10, 0);
+      targetCtx.moveTo(p1.x - HEX_RADIUS * SQRT3/2 - 2, p1.y - HEX_RADIUS);
+      targetCtx.lineTo(p1.x - HEX_RADIUS * SQRT3 - 2, p1.y - HEX_RADIUS/2);
+      targetCtx.lineTo(p2.x - HEX_RADIUS * SQRT3 - 2, p2.y + HEX_RADIUS/2);
+      targetCtx.lineTo(p2.x - HEX_RADIUS * SQRT3/2 - 2, p2.y + HEX_RADIUS);
+      targetCtx.fill();
+
+      targetCtx.beginPath();
+      p1 = getHexCenter(0, 10);
+      p2 = getHexCenter(10, 10);
+      targetCtx.moveTo(p1.x + HEX_RADIUS * SQRT3/2 + 2, p1.y - HEX_RADIUS);
+      targetCtx.lineTo(p1.x + HEX_RADIUS * SQRT3 + 2, p1.y - HEX_RADIUS/2);
+      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3 + 2, p2.y + HEX_RADIUS/2);
+      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2 + 2, p2.y + HEX_RADIUS);
+      targetCtx.fill();
+
+      targetCtx.shadowBlur = 0;
+    }
+
+    function drawLabels(targetCtx) {
+      targetCtx.fillStyle = '#6b7280';
+      targetCtx.font = 'bold 13px sans-serif';
+      targetCtx.textAlign = 'center';
+      targetCtx.textBaseline = 'middle';
+
+      const letters = ['A','B','C','D','E','F','G','H','I','J','K'];
+      for (let c = 0; c < 11; c++) {
+        let pTop = getHexCenter(0, c);
+        targetCtx.fillText(letters[c], pTop.x, pTop.y - 25);
+        let pBot = getHexCenter(10, c);
+        targetCtx.fillText(letters[c], pBot.x, pBot.y + 25);
+      }
+
+      for (let r = 0; r < 11; r++) {
+        let pLeft = getHexCenter(r, 0);
+        targetCtx.fillText(`${r + 1}`, pLeft.x - 26, pLeft.y);
+        let pRight = getHexCenter(r, 10);
+        targetCtx.fillText(`${r + 1}`, pRight.x + 26, pRight.y);
+      }
+    }
+
+    canvas.addEventListener('click', (e) => {
+      if (isGameOver) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      let closest = null;
+      let minDist = HEX_RADIUS;
+
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const { x, y } = getHexCenter(r, c);
+          const dist = Math.hypot(clickX - x, clickY - y);
+          if (dist < minDist && board[r][c] === 0) {
+            minDist = dist;
+            closest = { r, c };
+          }
+        }
+      }
+
+      if (closest) {
+        makeMove(closest.r, closest.c);
+      }
+    });
+
+    function makeMove(r, c) {
+      stepCount++;
+      board[r][c] = currentPlayer;
+      moveHistory.push({ r, c, player: currentPlayer, step: stepCount });
+
+      drawBoard();
+
+      if (checkWin(currentPlayer)) {
+        endGame(currentPlayer);
+        return;
+      }
+
+      movesLeftInTurn--;
+
+      if (movesLeftInTurn === 0) {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        movesLeftInTurn = 2;
+      }
+
+      updateStatus();
+    }
+
+    function updateStatus() {
+      const pName = currentPlayer === 1 ? 'A方 (藍色)' : 'B方 (紅色)';
+      const color = currentPlayer === 1 ? '#00f0ff' : '#ff0055';
+      turnIndicator.style.backgroundColor = color;
+      statusText.innerText = `輪到 ${pName} 下子 (剩餘 ${movesLeftInTurn} 顆)`;
+    }
+
+    function checkWin(player) {
+      const visited = Array(11).fill(false).map(() => Array(11).fill(false));
+      const queue = [];
+
+      if (player === 1) {
+        for (let r = 0; r < 11; r++) {
+          if (board[r][0] === 1) {
+            queue.push({ r, c: 0 });
+            visited[r][0] = true;
+          }
+        }
+      } else {
+        for (let c = 0; c < 11; c++) {
+          if (board[0][c] === 2) {
+            queue.push({ r: 0, c });
+            visited[0][c] = true;
+          }
+        }
+      }
+
+      while (queue.length > 0) {
+        const { r, c } = queue.shift();
+
+        if (player === 1 && c === 10) return true;
+        if (player === 2 && r === 10) return true;
+
+        const dirs = [[-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0]];
+        dirs.forEach(([dr, dc]) => {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < 11 && nc >= 0 && nc < 11) {
+            if (!visited[nr][nc] && board[nr][nc] === player) {
+              visited[nr][nc] = true;
+              queue.push({ r: nr, c: nc });
+            }
+          }
+        });
+      }
+      return false;
+    }
+
+    function endGame(winner) {
+      isGameOver = true;
+      const winnerName = winner === 1 ? 'A方 (藍色)' : 'B方 (紅色)';
+      const color = winner === 1 ? '#00f0ff' : '#ff0055';
+      
+      const titleEl = document.getElementById('winner-title');
+      titleEl.innerText = `${winnerName} 獲得勝利！`;
+      titleEl.style.color = color;
+
+      document.getElementById('winner-sub').innerText = `共歷經 ${stepCount} 手落子，成功完成路徑連接。`;
+      
+      setTimeout(() => {
+        resultModal.classList.add('active');
+      }, 500);
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = 900;
+      exportCanvas.height = 760;
+      const expCtx = exportCanvas.getContext('2d');
+
+      expCtx.fillStyle = '#030712';
+      expCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+      expCtx.fillStyle = '#00f0ff';
+      expCtx.font = 'bold 24px sans-serif';
+      expCtx.textAlign = 'center';
+      expCtx.fillText('HEX 六角棋 - 對局結果圖', 450, 45);
+
+      expCtx.font = '13px monospace';
+      expCtx.fillStyle = '#9ca3af';
+      const wText = currentPlayer === 1 ? '藍方 [A] 獲勝' : '紅方 [B] 獲勝';
+      expCtx.fillText(`結果: ${wText} | 總手數: ${stepCount} | 規則: ABBA 雙步`, 450, 72);
+
+      drawBoard(expCtx);
+
+      const link = document.createElement('a');
+      link.download = `hex_game_log_${Date.now()}.png`;
+      link.href = exportCanvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html>
