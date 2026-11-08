@@ -250,8 +250,9 @@
             cyanFill: '#00c8e6',
             crimson: '#ff0055',       // Glowing Crimson (Player B / Top-Bottom Border)
             crimsonFill: '#e6004c',
-            gridLine: 'rgba(0, 180, 220, 0.35)', // Empty hex outline
-            cellBg: '#070b16',        // Dark hex inner fill
+            purple: '#a855f7',        // Neutral Purple (Blend of Red & Blue)
+            gridLine: 'rgba(168, 85, 247, 0.4)', // Purple empty hex outline (Red/Blue neutral blend)
+            cellBg: '#090714',        // Deep purple-tinted dark hex inner fill
             hoverGlow: 'rgba(255, 255, 255, 0.3)'
         };
 
@@ -553,19 +554,12 @@
             ctx.closePath();
 
             if (cellData) {
-                // Placed Piece Styling
+                // Placed Piece Styling (Solid fill without white border)
                 const isPlayerA = (cellData.color === 'A');
                 const fillColor = isPlayerA ? COLORS.cyan : COLORS.crimson;
-                const glowColor = isPlayerA ? COLORS.cyan : COLORS.crimson;
 
                 ctx.fillStyle = fillColor;
                 ctx.fill();
-
-                ctx.lineWidth = Math.max(1.5, hexRadius * 0.1);
-                ctx.strokeStyle = '#ffffff';
-                ctx.shadowColor = glowColor;
-                ctx.shadowBlur = 12;
-                ctx.stroke();
 
                 // Bold White Move Number inside Hexagon with Orbitron Tech Font
                 ctx.shadowColor = 'rgba(0,0,0,0.8)';
@@ -585,7 +579,7 @@
                 ctx.strokeStyle = (curPlayer === 'A') ? COLORS.cyan : COLORS.crimson;
                 ctx.stroke();
             } else {
-                // Empty Grid Cell
+                // Empty Grid Cell (Purple grid line balance)
                 ctx.fillStyle = COLORS.cellBg;
                 ctx.fill();
                 ctx.lineWidth = Math.max(1, hexRadius * 0.05);
