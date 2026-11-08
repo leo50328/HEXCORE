@@ -1,751 +1,803 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HEX CORE - 雙人對決</title>
-  <style>
-    :root {
-      --bg-color: #030712;
-      --card-bg: rgba(17, 24, 39, 0.85);
-      --text-color: #f3f4f6;
-      --neon-blue: #00f0ff;
-      --neon-blue-glow: rgba(0, 240, 255, 0.4);
-      --blue-dark: #0284c7;
-      --neon-red: #ff0055;
-      --neon-red-glow: rgba(255, 0, 85, 0.4);
-      --red-dark: #be123c;
-      --cyber-border: #374151;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEX CORE - 11x11 Tactical Neon Grid</title>
+    <!-- Sci-Fi Google Fonts & Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Noto+Sans+TC:wght@600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #050811;
+            --cyan: #00f3ff;
+            --cyan-glow: rgba(0, 243, 255, 0.6);
+            --crimson: #ff0055;
+            --crimson-glow: rgba(255, 0, 85, 0.6);
+            --panel-bg: rgba(13, 19, 35, 0.85);
+            --border-line: rgba(0, 243, 255, 0.2);
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Roboto, sans-serif;
-    }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
-    body {
-      background-color: var(--bg-color);
-      background-image: 
-        radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 60%),
-        linear-gradient(to right, rgba(31, 41, 55, 0.2) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(31, 41, 55, 0.2) 1px, transparent 1px);
-      background-size: 100% 100%, 30px 30px, 30px 30px;
-      color: var(--text-color);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 10px;
-    }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Chakra Petch', 'Rajdhani', 'Noto Sans TC', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            background-image: 
+                radial-gradient(circle at 50% 30%, rgba(0, 243, 255, 0.05) 0%, transparent 65%),
+                radial-gradient(circle at 50% 80%, rgba(255, 0, 85, 0.05) 0%, transparent 65%),
+                linear-gradient(to bottom, #040710 0%, #070c1b 100%);
+        }
 
-    .screen {
-      display: none;
-      width: 100%;
-      max-width: 950px;
-      flex-direction: column;
-      align-items: center;
-    }
+        /* Sci-Fi Text Glow Classes */
+        .tech-glow-cyan {
+            text-shadow: 0 0 8px rgba(0, 243, 255, 0.8), 0 0 18px rgba(0, 243, 255, 0.4);
+        }
 
-    .screen.active {
-      display: flex;
-    }
+        .tech-glow-crimson {
+            text-shadow: 0 0 8px rgba(255, 0, 85, 0.8), 0 0 18px rgba(255, 0, 85, 0.4);
+        }
 
-    .cyber-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--cyber-border);
-      border-radius: 16px;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-      position: relative;
-      overflow: hidden;
-    }
+        .tech-glow-white {
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.7), 0 0 15px rgba(0, 243, 255, 0.3);
+        }
 
-    .cyber-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--neon-blue), var(--neon-red), transparent);
-    }
+        /* Glassmorphism containers */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+            border-radius: 16px;
+        }
 
-    /* 首頁 */
-    .home-card {
-      padding: 40px 30px;
-      text-align: center;
-      width: 100%;
-      max-width: 480px;
-    }
+        /* Cyberpunk Button Styling */
+        .cyber-btn {
+            position: relative;
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.15) 0%, rgba(0, 150, 255, 0.35) 100%);
+            border: 1px solid var(--cyan);
+            color: #ffffff;
+            font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 12px 28px;
+            border-radius: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.25);
+            cursor: pointer;
+        }
 
-    h1 {
-      font-size: 2.5rem;
-      letter-spacing: 3px;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, var(--neon-blue), var(--neon-red));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-    }
+        .cyber-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.35) 0%, rgba(0, 150, 255, 0.6) 100%);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.5);
+            transform: translateY(-2px);
+        }
 
-    p.subtitle {
-      color: #9ca3af;
-      margin-bottom: 30px;
-      font-size: 0.85rem;
-      letter-spacing: 1px;
-    }
+        .cyber-btn-crimson {
+            background: linear-gradient(135deg, rgba(255, 0, 85, 0.15) 0%, rgba(200, 0, 60, 0.35) 100%);
+            border-color: var(--crimson);
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.25);
+        }
 
-    .btn {
-      background: linear-gradient(135deg, rgba(0,240,255,0.2), rgba(0,150,255,0.4));
-      color: #ffffff;
-      border: 1px solid var(--neon-blue);
-      padding: 14px 28px;
-      font-size: 1rem;
-      font-weight: bold;
-      letter-spacing: 2px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      width: 100%;
-      box-shadow: 0 0 15px var(--neon-blue-glow);
-    }
+        .cyber-btn-crimson:hover {
+            background: linear-gradient(135deg, rgba(255, 0, 85, 0.35) 0%, rgba(200, 0, 60, 0.6) 100%);
+            box-shadow: 0 0 25px rgba(255, 0, 85, 0.5);
+        }
 
-    .btn:hover {
-      background: var(--neon-blue);
-      color: #000;
-      box-shadow: 0 0 25px var(--neon-blue);
-      transform: translateY(-2px);
-    }
+        .cyber-btn-neutral {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #e2e8f0;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
 
-    .btn-secondary {
-      background: rgba(31, 41, 55, 0.8);
-      color: #e5e7eb;
-      border: 1px solid #4b5563;
-      padding: 12px;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+        .cyber-btn-neutral:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #ffffff;
+        }
 
-    .btn-secondary:hover {
-      background: #374151;
-      border-color: #9ca3af;
-    }
+        /* Screen Transitions */
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
 
-    /* 遊戲 Header */
-    .game-header {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      padding: 15px 20px;
-    }
+        .screen.active {
+            display: flex;
+            opacity: 1;
+        }
 
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 1rem;
-      font-weight: bold;
-    }
+        /* Canvas Wrapper */
+        #canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 860px;
+            aspect-ratio: 1.35 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-    .player-indicator {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 0 10px currentColor;
-    }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
 
-    .board-container {
-      padding: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-    }
-
-    canvas {
-      display: block;
-      cursor: pointer;
-    }
-
-    /* 彈出視窗 Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-card {
-      padding: 30px;
-      text-align: center;
-      max-width: 420px;
-      width: 90%;
-    }
-
-    /* === 超立體 3D 硬幣樣式 === */
-    .coin-wrapper {
-      perspective: 1200px;
-      width: 140px;
-      height: 140px;
-      margin: 30px auto;
-      position: relative;
-    }
-
-    .coin-shadow {
-      position: absolute;
-      bottom: -20px;
-      left: 15%;
-      width: 70%;
-      height: 16px;
-      background: rgba(0, 0, 0, 0.6);
-      border-radius: 50%;
-      filter: blur(8px);
-      transition: all 3s cubic-bezier(0.15, 0.85, 0.35, 1.2);
-    }
-
-    .coin {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform 3.5s cubic-bezier(0.15, 0.85, 0.35, 1.15);
-    }
-
-    /* 正反面金屬質感 */
-    .coin-face {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      backface-visibility: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      font-weight: 900;
-      letter-spacing: 1px;
-      color: white;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-      box-shadow: 
-        inset 0 0 15px rgba(255,255,255,0.4),
-        inset 0 0 30px rgba(0,0,0,0.6);
-    }
-
-    .coin-face::after {
-      content: '';
-      position: absolute;
-      top: 6px; left: 6px; right: 6px; bottom: 6px;
-      border-radius: 50%;
-      border: 2px dashed rgba(255, 255, 255, 0.3);
-      pointer-events: none;
-    }
-
-    .coin-blue {
-      background: radial-gradient(circle at 35% 35%, #60a5fa 0%, #0284c7 50%, #0369a1 100%);
-      border: 5px solid #00f0ff;
-      transform: translateZ(6px);
-    }
-
-    .coin-red {
-      background: radial-gradient(circle at 35% 35%, #f87171 0%, #be123c 50%, #881337 100%);
-      border: 5px solid #ff0055;
-      transform: rotateY(180deg) translateZ(6px);
-    }
-
-    /* 3D 硬幣側邊厚度堆疊層 */
-    .coin-side {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: #475569;
-      border: 4px solid #334155;
-    }
-
-    .modal-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 20px;
-    }
-  </style>
+        /* Coin Flip Animation Card */
+        .coin-flip-card {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 900;
+            font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+            transition: transform 0.08s linear;
+            box-shadow: 0 0 30px currentColor;
+        }
+    </style>
 </head>
-<body>
+<body class="flex flex-col items-center justify-center">
 
-  <!-- 首頁 Screen -->
-  <div id="home-screen" class="screen active">
-    <div class="cyber-card home-card">
-      <h1>HEX CORE</h1>
-      <p class="subtitle">// 雙人線下對決 11x11 (ABBA 雙步規則)</p>
-      <button class="btn" id="start-btn">開始遊戲</button>
-    </div>
-  </div>
+    <!-- 1. HOME SCREEN -->
+    <div id="home-screen" class="screen active flex-col items-center justify-center text-center p-6 w-full h-full">
+        <div class="glass-panel p-10 max-w-lg w-full flex flex-col items-center border-t-2 border-cyan-400">
+            <h1 class="text-5xl md:text-6xl font-black tracking-[0.2em] mb-2 text-white font-['Orbitron'] tech-glow-cyan">
+                HEX CORE
+            </h1>
+            <p class="text-sm md:text-base text-cyan-300/80 tracking-[0.3em] mb-8 font-['Share_Tech_Mono'] font-bold">11x11 NEON TACTICAL GRID</p>
 
-  <!-- 遊戲主畫面 Screen -->
-  <div id="game-screen" class="screen">
-    <div class="cyber-card game-header">
-      <div class="status-badge">
-        <span id="turn-indicator" class="player-indicator"></span>
-        <span id="status-text">準備開局...</span>
-      </div>
-      <div>
-        <button id="home-btn" class="btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;">返回首頁</button>
-      </div>
-    </div>
+            <div class="bg-black/40 border border-slate-700/60 rounded-xl p-4 w-full mb-8 text-center">
+                <span class="text-xs text-gray-400 uppercase tracking-[0.25em] block mb-1 font-['Share_Tech_Mono']">遊戲模式 MODE</span>
+                <span class="text-lg font-bold text-cyan-400 tracking-widest font-['Orbitron'] tech-glow-cyan">PvP 玩家對戰</span>
+            </div>
 
-    <div class="cyber-card board-container">
-      <canvas id="hexCanvas"></canvas>
-    </div>
-  </div>
-
-  <!-- 投硬幣 Modal -->
-  <div id="coin-modal" class="modal-overlay">
-    <div class="cyber-card modal-card">
-      <h2 style="letter-spacing: 2px;">立體硬幣抽籤</h2>
-      <div class="coin-wrapper">
-        <div id="coin-shadow" class="coin-shadow"></div>
-        <div id="coin" class="coin">
-          <!-- 側邊立體厚度層 -->
-          <div class="coin-side" style="transform: translateZ(4px);"></div>
-          <div class="coin-side" style="transform: translateZ(2px);"></div>
-          <div class="coin-side" style="transform: translateZ(0px);"></div>
-          <div class="coin-side" style="transform: translateZ(-2px);"></div>
-          <div class="coin-side" style="transform: translateZ(-4px);"></div>
-          
-          <!-- 正反面 -->
-          <div class="coin-face coin-blue">
-            <span>A 方</span>
-            <span style="font-size: 0.75rem; color: #e0f2fe; margin-top: 2px;">(藍色)</span>
-          </div>
-          <div class="coin-face coin-red">
-            <span>B 方</span>
-            <span style="font-size: 0.75rem; color: #ffe4e6; margin-top: 2px;">(紅色)</span>
-          </div>
+            <button onclick="onStartGameClick()" class="cyber-btn w-full text-lg py-4 font-['Chakra_Petch'] tracking-widest tech-glow-white">
+                開始遊戲 START GAME
+            </button>
         </div>
-      </div>
-      <p id="coin-result-text" style="font-weight: bold; font-size: 1rem; color: #9ca3af; min-height: 24px;"></p>
-      <button id="coin-start-btn" class="btn" style="margin-top: 15px; display: none;">進入對局</button>
     </div>
-  </div>
 
-  <!-- 結算 Modal -->
-  <div id="result-modal" class="modal-overlay">
-    <div class="cyber-card modal-card">
-      <h2 id="winner-title" style="font-size: 1.8rem; margin-bottom: 10px;"></h2>
-      <p id="winner-sub" style="color: #9ca3af; margin-bottom: 25px; font-size: 0.9rem;"></p>
-      
-      <div class="modal-btns">
-        <button id="download-btn" class="btn">下載過程圖片</button>
-        <button id="restart-btn" class="btn-secondary">再玩一次</button>
-        <button id="back-home-btn" class="btn-secondary">返回首頁</button>
-      </div>
+    <!-- 2. COIN TOSS SCREEN -->
+    <div id="cointoss-screen" class="screen flex-col items-center justify-center text-center p-6 w-full h-full">
+        <div class="glass-panel p-10 max-w-md w-full flex flex-col items-center">
+            <h2 class="text-xl font-bold tracking-[0.2em] text-gray-200 mb-2 font-['Orbitron'] tech-glow-white">COIN FLIP PROTOCOL</h2>
+            <p class="text-xs text-cyan-400/80 mb-8 tracking-[0.25em] font-['Share_Tech_Mono']">DECIDING FIRST MOVE PLAYER</p>
+            
+            <div id="coin-element" class="coin-flip-card mb-8 bg-black/70 border-4 border-cyan-400 text-cyan-400">
+                <span id="coin-text" class="font-['Orbitron']">READY</span>
+            </div>
+
+            <div id="coin-result-text" class="text-lg font-bold h-8 tracking-wider text-white font-['Chakra_Petch']"></div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    const BOARD_SIZE = 11;
-    const HEX_RADIUS = 22;
-    const SQRT3 = Math.sqrt(3);
+    <!-- 3. GAME PLAY SCREEN (Clean status header layout) -->
+    <div id="game-screen" class="screen flex-col items-center justify-start pt-4 px-4 w-full h-full max-w-5xl">
+        <!-- Top Status Bar (Status Text & Return Button) -->
+        <div class="w-full max-w-[840px] px-4 py-3 flex items-center justify-between gap-2 sm:gap-4 mb-2 border border-slate-700/60 rounded-2xl bg-[#0c1222]/90 backdrop-blur-md shadow-lg">
+            <!-- Left: Turn Status Indicator -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <span id="ui-turn-dot" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0"></span>
+                <span id="ui-turn-text" class="text-xs sm:text-base font-bold tracking-wider text-gray-100 font-['Chakra_Petch','Orbitron']">
+                    輪到 B方 (紅色) 下子 (剩餘 1 顆)
+                </span>
+            </div>
 
-    let board = [];
-    let moveHistory = [];
-    let stepCount = 0;
-    
-    let startingPlayer = 1;
-    let currentPlayer = 1;
-    let movesLeftInTurn = 1; 
-    let isGameOver = false;
+            <!-- Right: Return Home Button -->
+            <button onclick="goHome()" class="px-3 py-1.5 sm:px-5 sm:py-1.5 rounded-lg border border-slate-600/80 bg-slate-800/80 hover:bg-slate-700 text-xs sm:text-sm font-bold text-gray-200 tracking-wider font-['Chakra_Petch'] transition-colors shadow-sm cursor-pointer flex-shrink-0 hover:text-cyan-400">
+                返回首頁
+            </button>
+        </div>
 
-    const canvas = document.getElementById('hexCanvas');
-    const ctx = canvas.getContext('2d');
+        <!-- Center Interactive Parallelogram Canvas -->
+        <div id="canvas-wrapper">
+            <canvas id="gameCanvas" width="1100" height="820"></canvas>
+        </div>
+    </div>
 
-    const homeScreen = document.getElementById('home-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const coinModal = document.getElementById('coin-modal');
-    const resultModal = document.getElementById('result-modal');
-    
-    const startBtn = document.getElementById('start-btn');
-    const coinStartBtn = document.getElementById('coin-start-btn');
-    const downloadBtn = document.getElementById('download-btn');
-    const restartBtn = document.getElementById('restart-btn');
-    const backHomeBtn = document.getElementById('back-home-btn');
-    const homeBtn = document.getElementById('home-btn');
+    <!-- 4. GAME OVER MODAL -->
+    <div id="win-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+        <div class="glass-panel p-8 max-w-md w-full flex flex-col items-center text-center border-t-4 border-cyan-400 animate-fade-in">
+            <div class="text-xs text-cyan-400 tracking-widest font-bold mb-2 font-['Orbitron']">MATCH COMPLETED</div>
+            <h2 id="modal-winner-title" class="text-3xl md:text-4xl font-black mb-2 text-white font-['Noto_Sans_TC','Orbitron']">
+                A方 (藍色) 獲勝！
+            </h2>
+            <p id="modal-winner-desc" class="text-sm text-gray-300 mb-6 font-medium">成功連通目標邊界</p>
 
-    const statusText = document.getElementById('status-text');
-    const turnIndicator = document.getElementById('turn-indicator');
+            <!-- Action Buttons requested by user -->
+            <div class="flex flex-col space-y-3 w-full">
+                <button onclick="downloadRecord()" class="cyber-btn cyber-btn-neutral w-full py-3 text-sm flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    下載過程圖 (含顏色與數字)
+                </button>
+                <button onclick="playAgain()" class="cyber-btn w-full py-3 text-sm">
+                    再一次 (同樣的順序)
+                </button>
+                <button onclick="goHome()" class="cyber-btn cyber-btn-crimson w-full py-3 text-sm">
+                    回首頁
+                </button>
+            </div>
+        </div>
+    </div>
 
-    startBtn.addEventListener('click', () => {
-      homeScreen.classList.remove('active');
-      gameScreen.classList.add('active');
-      initAndTossCoin();
-    });
+    <!-- JavaScript Logic -->
+    <script>
+        // Color Palette Matching Screenshot IMG_0880_ee2465.jpeg
+        const COLORS = {
+            bg: '#050811',            // Deep navy-black canvas background
+            cyan: '#00f3ff',          // Glowing Cyan (Player A / Left-Right Border)
+            cyanFill: '#00c8e6',
+            crimson: '#ff0055',       // Glowing Crimson (Player B / Top-Bottom Border)
+            crimsonFill: '#e6004c',
+            gridLine: 'rgba(0, 180, 220, 0.35)', // Empty hex outline
+            cellBg: '#070b16',        // Dark hex inner fill
+            hoverGlow: 'rgba(255, 255, 255, 0.3)'
+        };
 
-    homeBtn.addEventListener('click', backToHome);
-    backHomeBtn.addEventListener('click', () => {
-      resultModal.classList.remove('active');
-      backToHome();
-    });
+        const GRID_SIZE = 11; // 11x11 Hex Grid
+        const TURN_PATTERN = [1, 2, 2, 1]; // 12211221...
 
-    restartBtn.addEventListener('click', () => {
-      resultModal.classList.remove('active');
-      initAndTossCoin();
-    });
+        // Game State Variables
+        let firstPlayer = 'A'; // 'A' (藍) or 'B' (紅)
+        let moveHistory = [];  // [{r, c, color, step}]
+        let boardState = {};   // key: "r,c" -> { color, step }
+        let winningPath = null;
+        let hoveredCell = null;
 
-    function backToHome() {
-      gameScreen.classList.remove('active');
-      homeScreen.classList.add('active');
-    }
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
-    function initAndTossCoin() {
-      board = Array(BOARD_SIZE).fill(0).map(() => Array(BOARD_SIZE).fill(0));
-      moveHistory = [];
-      stepCount = 0;
-      isGameOver = false;
+        // Geometry parameters
+        let hexRadius = 24;
+        let hexWidth = Math.sqrt(3) * hexRadius;
+        let hexHeight = 2 * hexRadius;
+        let boardOffsetX = 0;
+        let boardOffsetY = 0;
 
-      coinModal.classList.add('active');
-      coinStartBtn.style.display = 'none';
-      document.getElementById('coin-result-text').innerText = '3D 硬幣空中旋轉中...';
-      
-      const coinEl = document.getElementById('coin');
-      const coinShadow = document.getElementById('coin-shadow');
-      coinEl.style.transform = 'rotateY(0deg) translateY(0px)';
-      coinShadow.style.transform = 'scale(1)';
-      coinShadow.style.opacity = '0.6';
-
-      const isA = Math.random() < 0.5;
-      startingPlayer = isA ? 1 : 2;
-      
-      const targetRotation = (isA ? 2160 : 2340); // 旋轉更多圈數更具立體感
-      
-      setTimeout(() => {
-        coinEl.style.transform = `rotateY(${targetRotation}deg) translateY(-20px)`;
-        coinShadow.style.transform = 'scale(0.6)';
-        coinShadow.style.opacity = '0.2';
-      }, 100);
-
-      setTimeout(() => {
-        coinEl.style.transform = `rotateY(${targetRotation}deg) translateY(0px)`;
-        coinShadow.style.transform = 'scale(1)';
-        coinShadow.style.opacity = '0.6';
-      }, 2800);
-
-      setTimeout(() => {
-        const name = startingPlayer === 1 ? 'A方 (藍色)' : 'B方 (紅色)';
-        document.getElementById('coin-result-text').innerText = `抽籤結果：由 ${name} 獲得先手！`;
-        coinStartBtn.style.display = 'block';
-      }, 3600);
-    }
-
-    coinStartBtn.addEventListener('click', () => {
-      coinModal.classList.remove('active');
-      currentPlayer = startingPlayer;
-      movesLeftInTurn = 1; 
-      
-      resizeCanvas();
-      drawBoard();
-      updateStatus();
-    });
-
-    function getHexCenter(r, c) {
-      const offsetX = 85;
-      const offsetY = 75;
-      const x = offsetX + (c + r * 0.5) * (HEX_RADIUS * SQRT3);
-      const y = offsetY + r * (HEX_RADIUS * 1.5);
-      return { x, y };
-    }
-
-    function resizeCanvas() {
-      canvas.width = 860;
-      canvas.height = 630;
-    }
-
-    function drawBoard(targetCtx = ctx) {
-      targetCtx.clearRect(0, 0, canvas.width, canvas.height);
-      targetCtx.fillStyle = '#0b0f19';
-      targetCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-      drawBoardBorders(targetCtx);
-
-      for (let r = 0; r < BOARD_SIZE; r++) {
-        for (let c = 0; c < BOARD_SIZE; c++) {
-          const { x, y } = getHexCenter(r, c);
-          const cellVal = board[r][c];
-          
-          let fillColor = '#111827';
-          let strokeColor = '#1f2937';
-
-          if (cellVal === 1) {
-            fillColor = '#00f0ff';
-            strokeColor = '#38bdf8';
-          } else if (cellVal === 2) {
-            fillColor = '#ff0055';
-            strokeColor = '#fb7185';
-          }
-
-          drawHexagon(targetCtx, x, y, HEX_RADIUS, fillColor, strokeColor, cellVal);
-
-          if (cellVal !== 0) {
-            const move = moveHistory.find(m => m.r === r && m.c === c);
-            if (move) {
-              targetCtx.fillStyle = (cellVal === 1) ? '#000000' : '#ffffff';
-              targetCtx.font = 'bold 12px sans-serif';
-              targetCtx.textAlign = 'center';
-              targetCtx.textBaseline = 'middle';
-              targetCtx.fillText(`${move.step}`, x, y);
-            }
-          }
-        }
-      }
-
-      drawLabels(targetCtx);
-    }
-
-    function drawHexagon(targetCtx, x, y, r, fillColor, strokeColor, cellVal) {
-      targetCtx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 180) * (60 * i + 30);
-        const hx = x + r * Math.cos(angle);
-        const hy = y + r * Math.sin(angle);
-        if (i === 0) targetCtx.moveTo(hx, hy);
-        else targetCtx.lineTo(hx, hy);
-      }
-      targetCtx.closePath();
-
-      if (cellVal !== 0) {
-        targetCtx.shadowColor = fillColor;
-        targetCtx.shadowBlur = 10;
-      } else {
-        targetCtx.shadowBlur = 0;
-      }
-
-      targetCtx.fillStyle = fillColor;
-      targetCtx.fill();
-      targetCtx.strokeStyle = strokeColor;
-      targetCtx.lineWidth = 1.5;
-      targetCtx.stroke();
-      targetCtx.shadowBlur = 0;
-    }
-
-    function drawBoardBorders(targetCtx) {
-      targetCtx.fillStyle = '#ff0055';
-      targetCtx.shadowColor = '#ff0055';
-      targetCtx.shadowBlur = 8;
-      targetCtx.beginPath();
-      let p1 = getHexCenter(0, 0);
-      let p2 = getHexCenter(0, 10);
-      targetCtx.moveTo(p1.x - HEX_RADIUS * SQRT3/2, p1.y - HEX_RADIUS - 2);
-      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2, p2.y - HEX_RADIUS - 2);
-      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2, p2.y - HEX_RADIUS/2 - 2);
-      targetCtx.lineTo(p1.x - HEX_RADIUS * SQRT3/2, p1.y - HEX_RADIUS/2 - 2);
-      targetCtx.fill();
-
-      targetCtx.beginPath();
-      p1 = getHexCenter(10, 0);
-      p2 = getHexCenter(10, 10);
-      targetCtx.moveTo(p1.x - HEX_RADIUS * SQRT3/2, p1.y + HEX_RADIUS/2 + 2);
-      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2, p2.y + HEX_RADIUS/2 + 2);
-      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2, p2.y + HEX_RADIUS + 2);
-      targetCtx.lineTo(p1.x - HEX_RADIUS * SQRT3/2, p1.y + HEX_RADIUS + 2);
-      targetCtx.fill();
-
-      targetCtx.fillStyle = '#00f0ff';
-      targetCtx.shadowColor = '#00f0ff';
-      targetCtx.beginPath();
-      p1 = getHexCenter(0, 0);
-      p2 = getHexCenter(10, 0);
-      targetCtx.moveTo(p1.x - HEX_RADIUS * SQRT3/2 - 2, p1.y - HEX_RADIUS);
-      targetCtx.lineTo(p1.x - HEX_RADIUS * SQRT3 - 2, p1.y - HEX_RADIUS/2);
-      targetCtx.lineTo(p2.x - HEX_RADIUS * SQRT3 - 2, p2.y + HEX_RADIUS/2);
-      targetCtx.lineTo(p2.x - HEX_RADIUS * SQRT3/2 - 2, p2.y + HEX_RADIUS);
-      targetCtx.fill();
-
-      targetCtx.beginPath();
-      p1 = getHexCenter(0, 10);
-      p2 = getHexCenter(10, 10);
-      targetCtx.moveTo(p1.x + HEX_RADIUS * SQRT3/2 + 2, p1.y - HEX_RADIUS);
-      targetCtx.lineTo(p1.x + HEX_RADIUS * SQRT3 + 2, p1.y - HEX_RADIUS/2);
-      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3 + 2, p2.y + HEX_RADIUS/2);
-      targetCtx.lineTo(p2.x + HEX_RADIUS * SQRT3/2 + 2, p2.y + HEX_RADIUS);
-      targetCtx.fill();
-
-      targetCtx.shadowBlur = 0;
-    }
-
-    function drawLabels(targetCtx) {
-      targetCtx.fillStyle = '#6b7280';
-      targetCtx.font = 'bold 13px sans-serif';
-      targetCtx.textAlign = 'center';
-      targetCtx.textBaseline = 'middle';
-
-      const letters = ['A','B','C','D','E','F','G','H','I','J','K'];
-      for (let c = 0; c < 11; c++) {
-        let pTop = getHexCenter(0, c);
-        targetCtx.fillText(letters[c], pTop.x, pTop.y - 25);
-        let pBot = getHexCenter(10, c);
-        targetCtx.fillText(letters[c], pBot.x, pBot.y + 25);
-      }
-
-      for (let r = 0; r < 11; r++) {
-        let pLeft = getHexCenter(r, 0);
-        targetCtx.fillText(`${r + 1}`, pLeft.x - 26, pLeft.y);
-        let pRight = getHexCenter(r, 10);
-        targetCtx.fillText(`${r + 1}`, pRight.x + 26, pRight.y);
-      }
-    }
-
-    canvas.addEventListener('click', (e) => {
-      if (isGameOver) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-
-      let closest = null;
-      let minDist = HEX_RADIUS;
-
-      for (let r = 0; r < BOARD_SIZE; r++) {
-        for (let c = 0; c < BOARD_SIZE; c++) {
-          const { x, y } = getHexCenter(r, c);
-          const dist = Math.hypot(clickX - x, clickY - y);
-          if (dist < minDist && board[r][c] === 0) {
-            minDist = dist;
-            closest = { r, c };
-          }
-        }
-      }
-
-      if (closest) {
-        makeMove(closest.r, closest.c);
-      }
-    });
-
-    function makeMove(r, c) {
-      stepCount++;
-      board[r][c] = currentPlayer;
-      moveHistory.push({ r, c, player: currentPlayer, step: stepCount });
-
-      drawBoard();
-
-      if (checkWin(currentPlayer)) {
-        endGame(currentPlayer);
-        return;
-      }
-
-      movesLeftInTurn--;
-
-      if (movesLeftInTurn === 0) {
-        currentPlayer = currentPlayer === 1 ? 2 : 1;
-        movesLeftInTurn = 2;
-      }
-
-      updateStatus();
-    }
-
-    function updateStatus() {
-      const pName = currentPlayer === 1 ? 'A方 (藍色)' : 'B方 (紅色)';
-      const color = currentPlayer === 1 ? '#00f0ff' : '#ff0055';
-      turnIndicator.style.backgroundColor = color;
-      statusText.innerText = `輪到 ${pName} 下子 (剩餘 ${movesLeftInTurn} 顆)`;
-    }
-
-    function checkWin(player) {
-      const visited = Array(11).fill(false).map(() => Array(11).fill(false));
-      const queue = [];
-
-      if (player === 1) {
-        for (let r = 0; r < 11; r++) {
-          if (board[r][0] === 1) {
-            queue.push({ r, c: 0 });
-            visited[r][0] = true;
-          }
-        }
-      } else {
-        for (let c = 0; c < 11; c++) {
-          if (board[0][c] === 2) {
-            queue.push({ r: 0, c });
-            visited[0][c] = true;
-          }
-        }
-      }
-
-      while (queue.length > 0) {
-        const { r, c } = queue.shift();
-
-        if (player === 1 && c === 10) return true;
-        if (player === 2 && r === 10) return true;
-
-        const dirs = [[-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0]];
-        dirs.forEach(([dr, dc]) => {
-          const nr = r + dr;
-          const nc = c + dc;
-          if (nr >= 0 && nr < 11 && nc >= 0 && nc < 11) {
-            if (!visited[nr][nc] && board[nr][nc] === player) {
-              visited[nr][nc] = true;
-              queue.push({ r: nr, c: nc });
-            }
-          }
+        // Init on Window Load
+        window.addEventListener('load', () => {
+            showScreen('home-screen');
+            setupCanvasEvents();
+            resizeCanvas();
         });
-      }
-      return false;
-    }
 
-    function endGame(winner) {
-      isGameOver = true;
-      const winnerName = winner === 1 ? 'A方 (藍色)' : 'B方 (紅色)';
-      const color = winner === 1 ? '#00f0ff' : '#ff0055';
-      
-      const titleEl = document.getElementById('winner-title');
-      titleEl.innerText = `${winnerName} 獲得勝利！`;
-      titleEl.style.color = color;
+        window.addEventListener('resize', resizeCanvas);
 
-      document.getElementById('winner-sub').innerText = `共歷經 ${stepCount} 手落子，成功完成路徑連接。`;
-      
-      setTimeout(() => {
-        resultModal.classList.add('active');
-      }, 500);
-    }
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
 
-    downloadBtn.addEventListener('click', () => {
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = 900;
-      exportCanvas.height = 760;
-      const expCtx = exportCanvas.getContext('2d');
+        // 1. HOME & COIN TOSS
+        function onStartGameClick() {
+            runCoinToss();
+        }
 
-      expCtx.fillStyle = '#030712';
-      expCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        function runCoinToss() {
+            showScreen('cointoss-screen');
+            const coinEl = document.getElementById('coin-element');
+            const coinText = document.getElementById('coin-text');
+            const resultText = document.getElementById('coin-result-text');
 
-      expCtx.fillStyle = '#00f0ff';
-      expCtx.font = 'bold 24px sans-serif';
-      expCtx.textAlign = 'center';
-      expCtx.fillText('HEX 六角棋 - 對局結果圖', 450, 45);
+            resultText.innerText = '';
+            let ticks = 0;
+            const maxTicks = 20;
 
-      expCtx.font = '13px monospace';
-      expCtx.fillStyle = '#9ca3af';
-      const wText = currentPlayer === 1 ? '藍方 [A] 獲勝' : '紅方 [B] 獲勝';
-      expCtx.fillText(`結果: ${wText} | 總手數: ${stepCount} | 規則: ABBA 雙步`, 450, 72);
+            const interval = setInterval(() => {
+                ticks++;
+                const isATurn = (ticks % 2 === 0);
+                
+                coinEl.style.transform = `scale(${1 + (ticks % 3) * 0.06}) rotateY(${ticks * 45}deg)`;
+                
+                if (isATurn) {
+                    coinEl.style.borderColor = COLORS.cyan;
+                    coinEl.style.color = COLORS.cyan;
+                    coinEl.style.boxShadow = `0 0 30px ${COLORS.cyan}`;
+                    coinText.innerText = 'A 方 (藍)';
+                } else {
+                    coinEl.style.borderColor = COLORS.crimson;
+                    coinEl.style.color = COLORS.crimson;
+                    coinEl.style.boxShadow = `0 0 30px ${COLORS.crimson}`;
+                    coinText.innerText = 'B 方 (紅)';
+                }
 
-      drawBoard(expCtx);
+                if (ticks >= maxTicks) {
+                    clearInterval(interval);
+                    coinEl.style.transform = 'scale(1) rotateY(0deg)';
+                    
+                    // Random pick first player
+                    firstPlayer = Math.random() < 0.5 ? 'A' : 'B';
+                    
+                    if (firstPlayer === 'A') {
+                        coinEl.style.borderColor = COLORS.cyan;
+                        coinEl.style.color = COLORS.cyan;
+                        coinText.innerText = 'A 方 (藍)';
+                        resultText.innerText = '⚡ A方 獲得先攻權 (先手 1)';
+                        resultText.className = 'text-lg font-bold h-8 tracking-wider text-cyan-400 font-["Chakra_Petch"] tech-glow-cyan';
+                    } else {
+                        coinEl.style.borderColor = COLORS.crimson;
+                        coinEl.style.color = COLORS.crimson;
+                        coinText.innerText = 'B 方 (紅)';
+                        resultText.innerText = '⚡ B方 獲得先攻權 (先手 1)';
+                        resultText.className = 'text-lg font-bold h-8 tracking-wider text-pink-500 font-["Chakra_Petch"] tech-glow-crimson';
+                    }
 
-      const link = document.createElement('a');
-      link.download = `hex_game_log_${Date.now()}.png`;
-      link.href = exportCanvas.toDataURL('image/png');
-      link.click();
-    });
-  </script>
+                    setTimeout(() => {
+                        startNewMatch();
+                    }, 1300);
+                }
+            }, 90);
+        }
+
+        // 2. MATCH START & 12211221 SEQUENCE
+        function startNewMatch() {
+            moveHistory = [];
+            boardState = {};
+            winningPath = null;
+            document.getElementById('win-modal').classList.add('hidden');
+            showScreen('game-screen');
+            updateUI();
+            resizeCanvas();
+        }
+
+        function getCurrentStep() {
+            return moveHistory.length + 1;
+        }
+
+        function getCurrentPlayer() {
+            const step = getCurrentStep();
+            // Sequence pattern: 1, 2, 2, 1 -> index (step - 1) % 4
+            const patternVal = TURN_PATTERN[(step - 1) % 4];
+            const secondPlayer = (firstPlayer === 'A') ? 'B' : 'A';
+            return (patternVal === 1) ? firstPlayer : secondPlayer;
+        }
+
+        function getRemainingInTurn() {
+            const m = moveHistory.length;
+            if (m === 0) return 1;
+            return (m % 2 === 1) ? 2 : 1;
+        }
+
+        function updateUI() {
+            const player = getCurrentPlayer();
+            const remaining = getRemainingInTurn();
+
+            const dotEl = document.getElementById('ui-turn-dot');
+            const textEl = document.getElementById('ui-turn-text');
+
+            if (player === 'A') {
+                dotEl.className = 'w-4 h-4 rounded-full bg-cyan-400 inline-block shadow-[0_0_12px_#00f3ff]';
+                textEl.innerHTML = `輪到 <span class="font-bold text-cyan-400 tech-glow-cyan">A方 (藍色)</span> 下子 (剩餘 <span class="font-bold text-cyan-400 font-['Orbitron'] tech-glow-cyan">${remaining}</span> 顆)`;
+            } else {
+                dotEl.className = 'w-4 h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055]';
+                textEl.innerHTML = `輪到 <span class="font-bold text-pink-500 tech-glow-crimson">B方 (紅色)</span> 下子 (剩餘 <span class="font-bold text-pink-500 font-['Orbitron'] tech-glow-crimson">${remaining}</span> 顆)`;
+            }
+        }
+
+        // 3. CANVAS & PARALLELOGRAM HEX GEOMETRY (Matching IMG_0880_ee2465.jpeg)
+        function resizeCanvas() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            if (!wrapper) return;
+            const w = wrapper.clientWidth || 840;
+            const h = wrapper.clientHeight || 620;
+            
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+
+            // Recalculate Hex Size based on Canvas dimensions
+            const totalWidthUnits = (GRID_SIZE + GRID_SIZE * 0.5 + 2.2) * Math.sqrt(3);
+            const totalHeightUnits = (GRID_SIZE * 1.5 + 3.2);
+
+            const scaleX = canvas.width / totalWidthUnits;
+            const scaleY = canvas.height / totalHeightUnits;
+
+            hexRadius = Math.min(scaleX, scaleY);
+            hexWidth = Math.sqrt(3) * hexRadius;
+            hexHeight = 2 * hexRadius;
+
+            // Center Parallelogram Grid
+            boardOffsetX = (canvas.width - (GRID_SIZE * hexWidth + (GRID_SIZE - 1) * (hexWidth / 2))) / 2;
+            boardOffsetY = (canvas.height - (GRID_SIZE * 1.5 * hexRadius)) / 2 + hexRadius * 0.6;
+
+            drawBoard();
+        }
+
+        function getHexCenter(r, c) {
+            // Pointy-topped hexagon center position in parallelogram grid
+            const x = boardOffsetX + c * hexWidth + r * (hexWidth / 2);
+            const y = boardOffsetY + r * (1.5 * hexRadius);
+            return { x, y };
+        }
+
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Fill Background
+            ctx.fillStyle = COLORS.bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Empty/Placed Hex Grid
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    drawHexCell(r, c);
+                }
+            }
+
+            // 2. Draw Top & Bottom Crimson (A-K) and Left & Right Cyan (1-11) Coordinate Badges
+            drawCoordinateBadges();
+
+            // 3. Draw Winning Path Line Overlay if game over
+            if (winningPath && winningPath.length > 0) {
+                drawWinningPath();
+            }
+        }
+
+        // Draw Coordinate Circular Badges strictly matching IMG_0880_ee2465.jpeg
+        function drawCoordinateBadges() {
+            ctx.save();
+            const badgeRadius = hexRadius * 0.46;
+            ctx.font = `700 ${Math.max(13, hexRadius * 0.54)}px "Share Tech Mono", monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const colLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+
+            // 1. Top & Bottom RED/CRIMSON Circular Badges (A - K: 黑底紅字)
+            for (let c = 0; c < GRID_SIZE; c++) {
+                // Top Badge (above Row 0)
+                const topPos = getHexCenter(0, c);
+                const topY = topPos.y - hexRadius * 1.5;
+                drawBadgeCircle(topPos.x, topY, badgeRadius, colLabels[c], COLORS.crimson);
+
+                // Bottom Badge (below Row 10)
+                const botPos = getHexCenter(GRID_SIZE - 1, c);
+                const botY = botPos.y + hexRadius * 1.5;
+                drawBadgeCircle(botPos.x, botY, badgeRadius, colLabels[c], COLORS.crimson);
+            }
+
+            // 2. Left & Right CYAN Circular Badges (1 - 11: 黑底藍字)
+            for (let r = 0; r < GRID_SIZE; r++) {
+                // Left Badge (left of Col 0)
+                const leftPos = getHexCenter(r, 0);
+                const leftX = leftPos.x - hexWidth * 0.85;
+                drawBadgeCircle(leftX, leftPos.y, badgeRadius, (r + 1).toString(), COLORS.cyan);
+
+                // Right Badge (right of Col 10)
+                const rightPos = getHexCenter(r, GRID_SIZE - 1);
+                const rightX = rightPos.x + hexWidth * 0.85;
+                drawBadgeCircle(rightX, rightPos.y, badgeRadius, (r + 1).toString(), COLORS.cyan);
+            }
+
+            ctx.restore();
+        }
+
+        function drawBadgeCircle(x, y, radius, text, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            // Black/Dark background fill
+            ctx.fillStyle = COLORS.cellBg;
+            ctx.fill();
+
+            // Colored border outline with slight glow effect
+            ctx.lineWidth = 1.8;
+            ctx.strokeStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 6;
+            ctx.stroke();
+
+            // Colored centered text using monospace tech font
+            ctx.shadowBlur = 4;
+            ctx.fillStyle = color;
+            ctx.fillText(text, x, y + 1);
+            ctx.shadowBlur = 0;
+        }
+
+        // Draw Individual Hexagon Cell (Matching screenshot colors)
+        function drawHexCell(r, c) {
+            const { x, y } = getHexCenter(r, c);
+            const key = `${r},${c}`;
+            const cellData = boardState[key];
+            const isHovered = hoveredCell && hoveredCell.r === r && hoveredCell.c === c && !cellData;
+
+            ctx.save();
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 180) * (60 * i - 30);
+                const px = x + hexRadius * Math.cos(angle);
+                const py = y + hexRadius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+
+            if (cellData) {
+                // Placed Piece Styling
+                const isPlayerA = (cellData.color === 'A');
+                const fillColor = isPlayerA ? COLORS.cyan : COLORS.crimson;
+                const glowColor = isPlayerA ? COLORS.cyan : COLORS.crimson;
+
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#ffffff';
+                ctx.shadowColor = glowColor;
+                ctx.shadowBlur = 14;
+                ctx.stroke();
+
+                // Bold White Move Number inside Hexagon with Orbitron Tech Font
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 6;
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `900 ${hexRadius * 0.72}px Orbitron, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(cellData.step, x, y + 1);
+
+            } else if (isHovered) {
+                // Active Hover Indicator
+                const curPlayer = getCurrentPlayer();
+                ctx.fillStyle = (curPlayer === 'A') ? 'rgba(0, 243, 255, 0.25)' : 'rgba(255, 0, 85, 0.25)';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = (curPlayer === 'A') ? COLORS.cyan : COLORS.crimson;
+                ctx.stroke();
+            } else {
+                // Empty Grid Cell (Deep dark navy fill with cyan outline)
+                ctx.fillStyle = COLORS.cellBg;
+                ctx.fill();
+                ctx.lineWidth = 1.2;
+                ctx.strokeStyle = COLORS.gridLine;
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function drawWinningPath() {
+            if (!winningPath || winningPath.length < 2) return;
+
+            ctx.save();
+            ctx.beginPath();
+            winningPath.forEach((pt, index) => {
+                const { x, y } = getHexCenter(pt.r, pt.c);
+                if (index === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.shadowColor = '#ffff00';
+            ctx.shadowBlur = 18;
+            ctx.stroke();
+
+            // Draw connecting nodes
+            winningPath.forEach(pt => {
+                const { x, y } = getHexCenter(pt.r, pt.c);
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            });
+
+            ctx.restore();
+        }
+
+        // 4. MOUSE / TOUCH INTERACTION
+        function setupCanvasEvents() {
+            function getEventPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function handleMove(e) {
+                const pos = getEventPos(e);
+                const found = findNearestHex(pos.x, pos.y);
+                if (found !== hoveredCell) {
+                    hoveredCell = found;
+                    drawBoard();
+                }
+            }
+
+            function handleClick(e) {
+                const pos = getEventPos(e);
+                const hex = findNearestHex(pos.x, pos.y);
+                if (hex) {
+                    makeMove(hex.r, hex.c);
+                }
+            }
+
+            canvas.addEventListener('mousemove', handleMove);
+            canvas.addEventListener('click', handleClick);
+
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleClick(e);
+            }, { passive: false });
+        }
+
+        function findNearestHex(mx, my) {
+            let minDistance = Infinity;
+            let nearest = null;
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const { x, y } = getHexCenter(r, c);
+                    const dist = Math.hypot(mx - x, my - y);
+                    if (dist < hexRadius * 0.95 && dist < minDistance) {
+                        minDistance = dist;
+                        nearest = { r, c };
+                    }
+                }
+            }
+            return nearest;
+        }
+
+        // 5. GAMEPLAY LOGIC & BFS WIN PATHFINDING
+        function makeMove(r, c) {
+            if (winningPath) return; // Game ended
+            const key = `${r},${c}`;
+            if (boardState[key]) return; // Occupied
+
+            const step = getCurrentStep();
+            const player = getCurrentPlayer();
+
+            // Record move
+            boardState[key] = { color: player, step };
+            moveHistory.push({ r, c, color: player, step });
+
+            updateUI();
+            drawBoard();
+
+            // Check Win condition immediately
+            const winPath = checkWin(player);
+            if (winPath) {
+                winningPath = winPath;
+                drawBoard();
+
+                setTimeout(() => {
+                    triggerGameOver(player, winPath);
+                }, 400);
+            }
+        }
+
+        function getNeighbors(r, c) {
+            const neighbors = [
+                { r: r,     c: c - 1 }, // Left
+                { r: r,     c: c + 1 }, // Right
+                { r: r - 1, c: c     }, // Top-Left
+                { r: r - 1, c: c + 1 }, // Top-Right
+                { r: r + 1, c: c - 1 }, // Bottom-Left
+                { r: r + 1, c: c     }  // Bottom-Right
+            ];
+            return neighbors.filter(n => n.r >= 0 && n.r < GRID_SIZE && n.c >= 0 && n.c < GRID_SIZE);
+        }
+
+        function checkWin(player) {
+            const queue = [];
+            const visited = new Set();
+            const parentMap = {};
+
+            // Player B (RED): Top Row (r=0) ➔ Bottom Row (r=10)
+            // Player A (BLUE): Left Col (c=0) ➔ Right Col (c=10)
+            if (player === 'B') {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const key = `0,${c}`;
+                    if (boardState[key] && boardState[key].color === 'B') {
+                        queue.push({ r: 0, c });
+                        visited.add(key);
+                    }
+                }
+            } else { // Player A
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    const key = `${r},0`;
+                    if (boardState[key] && boardState[key].color === 'A') {
+                        queue.push({ r, c: 0 });
+                        visited.add(key);
+                    }
+                }
+            }
+
+            while (queue.length > 0) {
+                const curr = queue.shift();
+                const currKey = `${curr.r},${curr.c}`;
+
+                if ((player === 'B' && curr.r === GRID_SIZE - 1) ||
+                    (player === 'A' && curr.c === GRID_SIZE - 1)) {
+                    
+                    const path = [curr];
+                    let pKey = currKey;
+                    while (parentMap[pKey]) {
+                        const parent = parentMap[pKey];
+                        path.unshift(parent);
+                        pKey = `${parent.r},${parent.c}`;
+                    }
+                    return path;
+                }
+
+                const neighbors = getNeighbors(curr.r, curr.c);
+                for (let n of neighbors) {
+                    const nKey = `${n.r},${n.c}`;
+                    if (!visited.has(nKey) && boardState[nKey] && boardState[nKey].color === player) {
+                        visited.add(nKey);
+                        parentMap[nKey] = curr;
+                        queue.push(n);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // 6. MODAL & ACTIONS
+        function triggerGameOver(winner, path) {
+            const modal = document.getElementById('win-modal');
+            const titleEl = document.getElementById('modal-winner-title');
+            const descEl = document.getElementById('modal-winner-desc');
+
+            if (winner === 'A') {
+                titleEl.innerText = 'A方 (藍色) 獲勝！';
+                titleEl.className = 'text-3xl md:text-4xl font-black mb-2 text-cyan-400 font-["Chakra_Petch"] tech-glow-cyan';
+                descEl.innerText = 'SYSTEM CONNECTED: LEFT ➔ RIGHT';
+            } else {
+                titleEl.innerText = 'B方 (紅色) 獲勝！';
+                titleEl.className = 'text-3xl md:text-4xl font-black mb-2 text-pink-500 font-["Chakra_Petch"] tech-glow-crimson';
+                descEl.innerText = 'SYSTEM CONNECTED: TOP ➔ BOTTOM';
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // Action 1: Download PNG of Canvas (Including dark background, numbers, colors)
+        function downloadRecord() {
+            drawBoard();
+            const imageURL = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.download = `HEX_CORE_MATCH_${Date.now()}.png`;
+            downloadLink.href = imageURL;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Action 2: Play Again (Same initial sequence)
+        function playAgain() {
+            startNewMatch();
+        }
+
+        // Action 3: Return Home
+        function goHome() {
+            document.getElementById('win-modal').classList.add('hidden');
+            showScreen('home-screen');
+        }
+    </script>
 </body>
 </html>
