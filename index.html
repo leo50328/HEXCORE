@@ -31,9 +31,10 @@
             background-color: var(--bg-dark);
             color: #ffffff;
             font-family: 'Chakra Petch', 'Rajdhani', 'Noto Sans TC', sans-serif;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
             background-image: 
                 radial-gradient(circle at 50% 30%, rgba(0, 243, 255, 0.05) 0%, transparent 65%),
                 radial-gradient(circle at 50% 80%, rgba(255, 0, 85, 0.05) 0%, transparent 65%),
@@ -113,7 +114,9 @@
         .screen {
             display: none;
             opacity: 0;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.25s ease-in-out;
+            width: 100%;
+            height: 100%;
         }
 
         .screen.active {
@@ -121,22 +124,21 @@
             opacity: 1;
         }
 
-        /* Canvas Wrapper */
+        /* Canvas Wrapper - Responsive Width-Based Height */
         #canvas-wrapper {
             position: relative;
             width: 100%;
-            max-width: 860px;
-            aspect-ratio: 1.35 / 1;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: visible;
         }
 
         canvas {
             width: 100%;
-            height: 100%;
+            height: auto;
             display: block;
-            touch-action: none;
+            touch-action: pan-y;
         }
 
         /* Coin Flip Animation Card */
@@ -191,26 +193,26 @@
     </div>
 
     <!-- 3. GAME PLAY SCREEN (Clean status header layout) -->
-    <div id="game-screen" class="screen flex-col items-center justify-start pt-4 px-4 w-full h-full max-w-5xl">
+    <div id="game-screen" class="screen flex-col items-center justify-start py-2 sm:py-3 px-2 sm:px-4 w-full min-h-screen overflow-x-hidden overflow-y-auto max-w-5xl">
         <!-- Top Status Bar (Status Text & Return Button) -->
-        <div class="w-full max-w-[840px] px-4 py-3 flex items-center justify-between gap-2 sm:gap-4 mb-2 border border-slate-700/60 rounded-2xl bg-[#0c1222]/90 backdrop-blur-md shadow-lg">
+        <div class="w-full max-w-[840px] px-3 py-2 sm:px-4 sm:py-2.5 flex items-center justify-between gap-2 mb-2 border border-slate-700/60 rounded-xl bg-[#0c1222]/90 backdrop-blur-md shadow-lg flex-shrink-0 sticky top-2 z-10">
             <!-- Left: Turn Status Indicator -->
-            <div class="flex items-center space-x-2 sm:space-x-3">
+            <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
                 <span id="ui-turn-dot" class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0"></span>
-                <span id="ui-turn-text" class="text-xs sm:text-base font-bold tracking-wider text-gray-100 font-['Chakra_Petch','Orbitron']">
+                <span id="ui-turn-text" class="text-xs sm:text-sm md:text-base font-bold tracking-wider text-gray-100 truncate font-['Chakra_Petch','Orbitron']">
                     輪到 B方 (紅色) 下子 (剩餘 1 顆)
                 </span>
             </div>
 
             <!-- Right: Return Home Button -->
-            <button onclick="goHome()" class="px-3 py-1.5 sm:px-5 sm:py-1.5 rounded-lg border border-slate-600/80 bg-slate-800/80 hover:bg-slate-700 text-xs sm:text-sm font-bold text-gray-200 tracking-wider font-['Chakra_Petch'] transition-colors shadow-sm cursor-pointer flex-shrink-0 hover:text-cyan-400">
+            <button onclick="goHome()" class="px-3 py-1 sm:px-4 sm:py-1.5 rounded-lg border border-slate-600/80 bg-slate-800/80 hover:bg-slate-700 text-xs sm:text-sm font-bold text-gray-200 tracking-wider font-['Chakra_Petch'] transition-colors shadow-sm cursor-pointer flex-shrink-0 hover:text-cyan-400">
                 返回首頁
             </button>
         </div>
 
-        <!-- Center Interactive Parallelogram Canvas -->
+        <!-- Center Interactive Parallelogram Canvas (Scales cleanly in viewport) -->
         <div id="canvas-wrapper">
-            <canvas id="gameCanvas" width="1100" height="820"></canvas>
+            <canvas id="gameCanvas"></canvas>
         </div>
     </div>
 
@@ -277,14 +279,29 @@
         window.addEventListener('load', () => {
             showScreen('home-screen');
             setupCanvasEvents();
+            setupResizeObserver();
             resizeCanvas();
         });
 
         window.addEventListener('resize', resizeCanvas);
 
+        function setupResizeObserver() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            if (window.ResizeObserver && wrapper) {
+                const ro = new ResizeObserver(() => {
+                    resizeCanvas();
+                });
+                ro.observe(wrapper);
+            }
+        }
+
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+            const target = document.getElementById(id);
+            target.classList.add('active');
+            if (id === 'game-screen') {
+                setTimeout(resizeCanvas, 50);
+            }
         }
 
         // 1. HOME & COIN TOSS
@@ -380,44 +397,48 @@
         function updateUI() {
             const player = getCurrentPlayer();
             const remaining = getRemainingInTurn();
-
-            const dotEl = document.getElementById('ui-turn-dot');
-            const textEl = document.getElementById('ui-turn-text');
+            
+            const dot = document.getElementById('ui-turn-dot');
+            const text = document.getElementById('ui-turn-text');
 
             if (player === 'A') {
-                dotEl.className = 'w-4 h-4 rounded-full bg-cyan-400 inline-block shadow-[0_0_12px_#00f3ff]';
-                textEl.innerHTML = `輪到 <span class="font-bold text-cyan-400 tech-glow-cyan">A方 (藍色)</span> 下子 (剩餘 <span class="font-bold text-cyan-400 font-['Orbitron'] tech-glow-cyan">${remaining}</span> 顆)`;
+                dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-cyan-400 inline-block shadow-[0_0_12px_#00f3ff] flex-shrink-0";
+                text.innerHTML = `輪到 <span class="text-cyan-400 font-bold">A方 (藍色)</span> 下子 (剩餘 <span class="font-bold">${remaining}</span> 顆)`;
             } else {
-                dotEl.className = 'w-4 h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055]';
-                textEl.innerHTML = `輪到 <span class="font-bold text-pink-500 tech-glow-crimson">B方 (紅色)</span> 下子 (剩餘 <span class="font-bold text-pink-500 font-['Orbitron'] tech-glow-crimson">${remaining}</span> 顆)`;
+                dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0";
+                text.innerHTML = `輪到 <span class="text-pink-500 font-bold">B方 (紅色)</span> 下子 (剩餘 <span class="font-bold">${remaining}</span> 顆)`;
             }
         }
 
-        // 3. CANVAS & PARALLELOGRAM HEX GEOMETRY (Matching IMG_0880_ee2465.jpeg)
+        // 3. CANVAS & PARALLELOGRAM HEX GEOMETRY (Responsive Width-Based Fit)
         function resizeCanvas() {
             const wrapper = document.getElementById('canvas-wrapper');
-            if (!wrapper) return;
-            const w = wrapper.clientWidth || 840;
-            const h = wrapper.clientHeight || 620;
+            if (!wrapper || !wrapper.clientWidth) return;
             
+            const w = wrapper.clientWidth;
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = w * dpr;
-            canvas.height = h * dpr;
 
-            // Recalculate Hex Size based on Canvas dimensions
-            const totalWidthUnits = (GRID_SIZE + GRID_SIZE * 0.5 + 2.2) * Math.sqrt(3);
-            const totalHeightUnits = (GRID_SIZE * 1.5 + 3.2);
+            // Compute precise unit grid boundaries for 11x11 Parallelogram
+            const totalWidthUnits = (GRID_SIZE + (GRID_SIZE - 1) * 0.5 + 2.0) * Math.sqrt(3);
+            const totalHeightUnits = (GRID_SIZE * 1.5 + 4.2);
 
-            const scaleX = canvas.width / totalWidthUnits;
-            const scaleY = canvas.height / totalHeightUnits;
-
-            hexRadius = Math.min(scaleX, scaleY);
+            // Scale strictly based on horizontal width
+            hexRadius = (w * dpr) / totalWidthUnits;
             hexWidth = Math.sqrt(3) * hexRadius;
             hexHeight = 2 * hexRadius;
 
-            // Center Parallelogram Grid
-            boardOffsetX = (canvas.width - (GRID_SIZE * hexWidth + (GRID_SIZE - 1) * (hexWidth / 2))) / 2;
-            boardOffsetY = (canvas.height - (GRID_SIZE * 1.5 * hexRadius)) / 2 + hexRadius * 0.6;
+            const computedHeightInternal = hexRadius * totalHeightUnits;
+            const computedHeightCSS = computedHeightInternal / dpr;
+
+            canvas.width = w * dpr;
+            canvas.height = computedHeightInternal;
+
+            canvas.style.width = `${w}px`;
+            canvas.style.height = `${computedHeightCSS}px`;
+
+            // Center Parallelogram Grid within canvas
+            boardOffsetX = (canvas.width - ((GRID_SIZE - 1) * 1.5 * hexWidth)) / 2;
+            boardOffsetY = (canvas.height - ((GRID_SIZE - 1) * 1.5 * hexRadius)) / 2;
 
             drawBoard();
         }
@@ -452,11 +473,12 @@
             }
         }
 
-        // Draw Coordinate Circular Badges strictly matching IMG_0880_ee2465.jpeg
+        // Draw Coordinate Circular Badges strictly matching screenshot styling
         function drawCoordinateBadges() {
             ctx.save();
             const badgeRadius = hexRadius * 0.46;
-            ctx.font = `700 ${Math.max(13, hexRadius * 0.54)}px "Share Tech Mono", monospace`;
+            const fontSize = Math.max(10, hexRadius * 0.52);
+            ctx.font = `700 ${fontSize}px "Share Tech Mono", monospace`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
@@ -466,12 +488,12 @@
             for (let c = 0; c < GRID_SIZE; c++) {
                 // Top Badge (above Row 0)
                 const topPos = getHexCenter(0, c);
-                const topY = topPos.y - hexRadius * 1.5;
+                const topY = topPos.y - hexRadius * 1.45;
                 drawBadgeCircle(topPos.x, topY, badgeRadius, colLabels[c], COLORS.crimson);
 
                 // Bottom Badge (below Row 10)
                 const botPos = getHexCenter(GRID_SIZE - 1, c);
-                const botY = botPos.y + hexRadius * 1.5;
+                const botY = botPos.y + hexRadius * 1.45;
                 drawBadgeCircle(botPos.x, botY, badgeRadius, colLabels[c], COLORS.crimson);
             }
 
@@ -499,7 +521,7 @@
             ctx.fill();
 
             // Colored border outline with slight glow effect
-            ctx.lineWidth = 1.8;
+            ctx.lineWidth = Math.max(1, radius * 0.16);
             ctx.strokeStyle = color;
             ctx.shadowColor = color;
             ctx.shadowBlur = 6;
@@ -512,7 +534,7 @@
             ctx.shadowBlur = 0;
         }
 
-        // Draw Individual Hexagon Cell (Matching screenshot colors)
+        // Draw Individual Hexagon Cell
         function drawHexCell(r, c) {
             const { x, y } = getHexCenter(r, c);
             const key = `${r},${c}`;
@@ -539,17 +561,17 @@
                 ctx.fillStyle = fillColor;
                 ctx.fill();
 
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = Math.max(1.5, hexRadius * 0.1);
                 ctx.strokeStyle = '#ffffff';
                 ctx.shadowColor = glowColor;
-                ctx.shadowBlur = 14;
+                ctx.shadowBlur = 12;
                 ctx.stroke();
 
                 // Bold White Move Number inside Hexagon with Orbitron Tech Font
                 ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                ctx.shadowBlur = 6;
+                ctx.shadowBlur = 5;
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `900 ${hexRadius * 0.72}px Orbitron, sans-serif`;
+                ctx.font = `900 ${hexRadius * 0.68}px Orbitron, sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(cellData.step, x, y + 1);
@@ -563,10 +585,10 @@
                 ctx.strokeStyle = (curPlayer === 'A') ? COLORS.cyan : COLORS.crimson;
                 ctx.stroke();
             } else {
-                // Empty Grid Cell (Deep dark navy fill with cyan outline)
+                // Empty Grid Cell
                 ctx.fillStyle = COLORS.cellBg;
                 ctx.fill();
-                ctx.lineWidth = 1.2;
+                ctx.lineWidth = Math.max(1, hexRadius * 0.05);
                 ctx.strokeStyle = COLORS.gridLine;
                 ctx.stroke();
             }
@@ -585,7 +607,7 @@
                 else ctx.lineTo(x, y);
             });
 
-            ctx.lineWidth = 5;
+            ctx.lineWidth = Math.max(3, hexRadius * 0.2);
             ctx.strokeStyle = '#ffffff';
             ctx.shadowColor = '#ffff00';
             ctx.shadowBlur = 18;
@@ -595,7 +617,7 @@
             winningPath.forEach(pt => {
                 const { x, y } = getHexCenter(pt.r, pt.c);
                 ctx.beginPath();
-                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.arc(x, y, Math.max(3, hexRadius * 0.2), 0, Math.PI * 2);
                 ctx.fillStyle = '#ffffff';
                 ctx.fill();
             });
@@ -605,12 +627,26 @@
 
         // 4. MOUSE / TOUCH INTERACTION
         function setupCanvasEvents() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isTouchMove = false;
+
             function getEventPos(e) {
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                let clientX, clientY;
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else if (e.changedTouches && e.changedTouches.length > 0) {
+                    clientX = e.changedTouches[0].clientX;
+                    clientY = e.changedTouches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
                 return {
                     x: (clientX - rect.left) * scaleX,
                     y: (clientY - rect.top) * scaleY
@@ -638,9 +674,28 @@
             canvas.addEventListener('click', handleClick);
 
             canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                handleClick(e);
-            }, { passive: false });
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    isTouchMove = false;
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) {
+                    const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                    if (dx > 10 || dy > 10) {
+                        isTouchMove = true;
+                    }
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchend', (e) => {
+                if (!isTouchMove) {
+                    handleClick(e);
+                }
+            });
         }
 
         function findNearestHex(mx, my) {
