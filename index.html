@@ -8,10 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Noto+Sans+TC:wght@600;700;900&display=swap" rel="stylesheet">
     
-    <!-- PeerJS SDK (用於跨網路 P2P 連線) -->
+    <!-- PeerJS SDK (WebRTC P2P Direct Connection) -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     
-    <!-- MQTT Over WebSocket SDK (跨網路 100% 穿透備援頻道) -->
+    <!-- MQTT Over WebSocket SDK (Fallback Relay Channel) -->
     <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
     
     <style>
@@ -185,7 +185,7 @@
 </head>
 <body class="flex flex-col items-center justify-center">
 
-    <!-- 回合與系統提示彈窗 Toast (預設 display:none 避免誤遮畫面) -->
+    <!-- 回合與系統提示彈窗 Toast -->
     <div id="turn-toast" style="display: none;" class="fixed top-14 left-1/2 -translate-x-1/2 bg-cyan-500/90 text-black font-black px-6 py-2.5 rounded-full shadow-[0_0_25px_#00f3ff] opacity-0 pointer-events-none z-50 font-['Orbitron','Noto_Sans_TC'] tracking-widest text-sm sm:text-base flex items-center gap-2 border border-white/50 backdrop-blur-md">
         <span id="toast-icon">⚡</span>
         <span id="toast-msg">輪到 A 的回合！</span>
@@ -308,7 +308,7 @@
         </div>
     </div>
 
-    <!-- 4. GAME OVER MODAL (加入 style="display: none;" 預防隱形遮罩) -->
+    <!-- 4. GAME OVER MODAL -->
     <div id="win-modal" style="display: none;" class="fixed inset-0 bg-black/80 backdrop-blur-md items-center justify-center z-50 p-4">
         <div class="glass-panel p-8 max-w-md w-full flex flex-col items-center text-center border-t-4 border-cyan-400 animate-fade-in">
             <div class="text-xs text-cyan-400 tracking-widest font-bold mb-2 font-['Orbitron']">MATCH COMPLETED</div>
@@ -331,11 +331,20 @@
 
     <!-- JavaScript Logic -->
     <script>
-        // 全局攔截 WebSocket SecurityError，防止沙盒限制阻斷執行
+        // 全局攔截 WebSocket SecurityError 與 UnhandledRejection，防止沙盒網路限制阻斷執行
         window.addEventListener('error', (e) => {
             if (e && e.message && (e.message.includes('WebSocket') || e.message.includes('SecurityError'))) {
                 console.warn('[Network Shield] 捕捉沙盒網路限制:', e.message);
                 if (e.preventDefault) e.preventDefault();
+                return true;
+            }
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            const reason = e.reason ? (e.reason.message || String(e.reason)) : String(e);
+            if (reason.includes('WebSocket') || reason.includes('SecurityError') || reason.includes('Canvas')) {
+                console.warn('[Network Shield] 捕捉沙盒 WebSocket Unhandled Rejection:', reason);
+                e.preventDefault();
                 return true;
             }
         });
@@ -347,7 +356,6 @@
                     { urls: 'stun:stun.l.google.com:19302' },
                     { urls: 'stun:stun1.l.google.com:19302' },
                     { urls: 'stun:global.stun.twilio.com:3478' },
-                    // 免費開放式 TURN 伺服器 (專門解決 4G/5G 嚴格型 NAT 穿透失敗)
                     { urls: 'turn:openrelay.metered.ca:80', username: 'openrelay', credential: 'openrelay' },
                     { urls: 'turn:openrelay.metered.ca:443', username: 'openrelay', credential: 'openrelay' },
                     { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelay', credential: 'openrelay' }
@@ -390,6 +398,8 @@
         let lastNotifiedTurnPlayer = null; 
         let joinTimeoutTimer = null;
         let createTimeoutTimer = null;
+        let emptyRoomTimer = null;         // 10 分鐘空房自動關閉計時器
+        let isOpponentConnected = false;   // 標記對手是否已加入連線
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -435,7 +445,98 @@
             }
         }
 
-        // 浮動 Toast 提示 (區分 A方藍/B方紅 與 警告/錯誤)
+        // 核心網路與連線徹底清理函式 (修復離線再開房連線遺留問題)
+        function cleanupNetwork() {
+            // 1. 取消任何運行中的逾時計時器
+            if (createTimeoutTimer) {
+                clearTimeout(createTimeoutTimer);
+                createTimeoutTimer = null;
+            }
+            if (joinTimeoutTimer) {
+                clearTimeout(joinTimeoutTimer);
+                joinTimeoutTimer = null;
+            }
+            if (emptyRoomTimer) {
+                clearTimeout(emptyRoomTimer);
+                emptyRoomTimer = null;
+            }
+            isOpponentConnected = false;
+
+            // 2. 斷開與解綁數據連線
+            if (conn) {
+                try {
+                    if (typeof conn.off === 'function') {
+                        conn.off('data');
+                        conn.off('close');
+                        conn.off('error');
+                    }
+                    if (typeof conn.close === 'function') {
+                        conn.close();
+                    }
+                } catch (e) {
+                    console.warn('[Cleanup] Connection close error:', e);
+                }
+                conn = null;
+            }
+
+            // 3. 銷毀 PeerJS 實例
+            if (peer) {
+                try {
+                    if (typeof peer.off === 'function') {
+                        peer.off('open');
+                        peer.off('connection');
+                        peer.off('error');
+                        peer.off('close');
+                    }
+                    if (peer.disconnected === false && typeof peer.disconnect === 'function') {
+                        peer.disconnect();
+                    }
+                    if (typeof peer.destroy === 'function') {
+                        peer.destroy();
+                    }
+                } catch (e) {
+                    console.warn('[Cleanup] Peer destroy error:', e);
+                }
+                peer = null;
+            }
+
+            // 4. 重置變數狀態
+            myRole = null;
+            myReady = false;
+            oppReady = false;
+            customOppName = "";
+            lastNotifiedTurnPlayer = null;
+
+            // 5. 重置大廳與首頁 UI 狀態
+            const roomIdEl = document.getElementById('display-room-id');
+            if (roomIdEl) roomIdEl.innerText = '------';
+
+            const myReadyStatus = document.getElementById('my-ready-status');
+            if (myReadyStatus) {
+                myReadyStatus.innerText = '未準備';
+                myReadyStatus.className = 'text-red-500 font-bold text-xs';
+            }
+
+            const oppReadyStatus = document.getElementById('opp-ready-status');
+            if (oppReadyStatus) {
+                oppReadyStatus.innerText = '等待連線';
+                oppReadyStatus.className = 'text-red-500 font-bold text-xs';
+            }
+
+            const btnReady = document.getElementById('btn-ready');
+            if (btnReady) {
+                btnReady.disabled = true;
+                btnReady.innerText = '準備完成 READY';
+                btnReady.className = "cyber-btn w-full text-lg py-3.5 font-['Chakra_Petch'] tracking-widest tech-glow-white mb-3 cursor-pointer";
+            }
+
+            const homeStatus = document.getElementById('home-status');
+            if (homeStatus) homeStatus.innerText = '';
+
+            updateLobbyRoleUI();
+        }
+
+        // 浮動 Toast 提示
         function showNotification(msg, type = 'cyan') {
             const toast = document.getElementById('turn-toast');
             const toastMsg = document.getElementById('toast-msg');
@@ -465,7 +566,7 @@
             toast.classList.add('toast-animate');
         }
 
-        // 多人連線專用：暱稱更新邏輯 (嚴格限制10字內)
+        // 多人連線專用：暱稱更新邏輯 (嚴格限制 10 字內)
         function updateMyName(val) {
             let cleanVal = val.slice(0, 10);
             customMyName = cleanVal.trim();
@@ -488,12 +589,10 @@
         }
 
         function getPlayerDisplayName(playerRole) {
-            // 單機對決模式：固定顯示 A方 (藍色) / B方 (紅色)
             if (isLocalMode) {
                 return (playerRole === 'A') ? 'A方 (藍色)' : 'B方 (紅色)';
             }
 
-            // 多人連線模式：優先顯示自訂暱稱 (10字內)
             if (playerRole === myRole) {
                 return customMyName || (myRole === 'A' ? 'A方 (藍色)' : 'B方 (紅色)');
             } else {
@@ -558,7 +657,7 @@
             return id;
         }
 
-        // --- 備案 2：MQTT Over WebSocket 雲端中繼轉接器 (100% 跨網路穿透) ---
+        // --- MQTT Over WebSocket 雲端中繼轉接器 ---
         class MqttRelayP2P {
             constructor(roomId, isHost) {
                 this.roomId = roomId;
@@ -571,39 +670,44 @@
                 const oppTopic = isHost ? `hexcore/room/${roomId}/client` : `hexcore/room/${roomId}/host`;
                 this.oppTopic = oppTopic;
 
-                // 使用全球公共 WebSocket MQTT Broker (wss:// 443 通道，穿透 100% 防火牆)
-                const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
-                this.client = mqtt.connect(brokerUrl, {
-                    keepalive: 30,
-                    clientId: 'hex_' + (isHost ? 'H_' : 'C_') + Math.random().toString(16).substring(2, 8)
-                });
+                try {
+                    if (typeof mqtt !== 'undefined') {
+                        const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+                        this.client = mqtt.connect(brokerUrl, {
+                            keepalive: 30,
+                            clientId: 'hex_' + (isHost ? 'H_' : 'C_') + Math.random().toString(16).substring(2, 8)
+                        });
 
-                this.client.on('connect', () => {
-                    this.open = true;
-                    this.client.subscribe(oppTopic);
-                    console.log(`[MQTT 中繼站] 成功連線，訂閱主題: ${oppTopic}`);
-                });
+                        this.client.on('connect', () => {
+                            this.open = true;
+                            this.client.subscribe(oppTopic);
+                            console.log(`[MQTT 中繼站] 成功連線，訂閱主題: ${oppTopic}`);
+                        });
 
-                this.client.on('message', (topic, message) => {
-                    if (topic === this.oppTopic && this.open) {
-                        try {
-                            const payload = JSON.parse(message.toString());
-                            this.messageListeners.forEach(fn => fn(payload));
-                        } catch(e) {}
+                        this.client.on('message', (topic, message) => {
+                            if (topic === this.oppTopic && this.open) {
+                                try {
+                                    const payload = JSON.parse(message.toString());
+                                    this.messageListeners.forEach(fn => fn(payload));
+                                } catch(e) {}
+                            }
+                        });
+
+                        this.client.on('error', (err) => {
+                            console.warn('[MQTT 中繼站] 錯誤:', err);
+                        });
+
+                        this.client.on('close', () => {
+                            this.open = false;
+                        });
                     }
-                });
-
-                this.client.on('error', (err) => {
-                    console.warn('[MQTT 中繼站] 錯誤:', err);
-                });
-
-                this.client.on('close', () => {
-                    this.open = false;
-                });
+                } catch (err) {
+                    console.warn('[MQTT 中繼站] WebSocket 沙盒阻擋限制:', err);
+                }
             }
 
             send(payload) {
-                if (!this.open) return;
+                if (!this.open || !this.client) return;
                 const targetTopic = this.isHost ? `hexcore/room/${this.roomId}/client` : `hexcore/room/${this.roomId}/host`;
                 try {
                     this.client.publish(targetTopic, JSON.stringify(payload));
@@ -626,32 +730,36 @@
             }
         }
 
-        // --- 備案 3：同機廣播頻道 P2P 備援類別 ---
+        // --- 本地 BroadcastChannel 備援 (當所有 WebSocket / WebRTC 在 Canvas 沙盒中被禁時使用) ---
         class LocalBroadcastP2P {
-            constructor(channelName, isHost = false) {
-                this.channelName = 'HEX_CORE_' + channelName;
+            constructor(roomId, isHost) {
+                this.roomId = roomId;
                 this.isHost = isHost;
                 this.open = true;
-                this.channel = new BroadcastChannel(this.channelName);
                 this.messageListeners = [];
                 this.closeListeners = [];
+                this.channelSend = `hexcore_room_${roomId}_${isHost ? 'H2C' : 'C2H'}`;
+                this.channelListen = `hexcore_room_${roomId}_${isHost ? 'C2H' : 'H2C'}`;
 
-                this.channel.onmessage = (e) => {
-                    if (!this.open) return;
-                    const data = e.data;
-                    if (data && data._sender !== (this.isHost ? 'host' : 'client')) {
-                        this.messageListeners.forEach(fn => fn(data.payload));
+                try {
+                    if (typeof BroadcastChannel !== 'undefined') {
+                        this.bcSend = new BroadcastChannel(this.channelSend);
+                        this.bcListen = new BroadcastChannel(this.channelListen);
+                        this.bcListen.onmessage = (e) => {
+                            if (this.open && e.data) {
+                                this.messageListeners.forEach(fn => fn(e.data));
+                            }
+                        };
                     }
-                };
+                } catch(e) {
+                    console.warn('[Local Broadcast] 沙盒限制 BroadcastChannel:', e);
+                }
             }
 
             send(payload) {
-                if (!this.open) return;
+                if (!this.open || !this.bcSend) return;
                 try {
-                    this.channel.postMessage({
-                        _sender: this.isHost ? 'host' : 'client',
-                        payload: payload
-                    });
+                    this.bcSend.postMessage(payload);
                 } catch(e) {}
             }
 
@@ -661,32 +769,40 @@
             }
 
             close() {
-                if (!this.open) return;
                 this.open = false;
+                if (this.bcSend) { try { this.bcSend.close(); } catch(e){} }
+                if (this.bcListen) { try { this.bcListen.close(); } catch(e){} }
                 const listeners = [...this.closeListeners];
                 this.closeListeners = [];
-                try { this.channel.close(); } catch(e){}
                 listeners.forEach(fn => fn());
             }
         }
 
+        // 10 分鐘空房自動關閉計時
+        function startEmptyRoomTimer() {
+            if (emptyRoomTimer) clearTimeout(emptyRoomTimer);
+            emptyRoomTimer = setTimeout(() => {
+                if (!isOpponentConnected) {
+                    showNotification('⏰ 超過 10 分鐘無人加入，房間已自動關閉！', 'warning');
+                    goHome();
+                }
+            }, 10 * 60 * 1000); // 10 分鐘 (600,000 ms)
+        }
+
         // --- 同機雙人對戰模式 (單機對決) ---
         function startLocalGame() {
+            cleanupNetwork();
             isLocalMode = true;
-            myRole = null;
-            if (conn) { try { conn.close(); } catch(e){} conn = null; }
-            if (peer) { try { peer.destroy(); } catch(e){} peer = null; }
-
             const first = Math.random() < 0.5 ? 'A' : 'B';
             runCoinToss(first);
         }
 
-        // --- P2P 網路連線與多重備援自動切換邏輯 ---
+        // --- P2P 網路連線邏輯 ---
         function createRoom() {
+            cleanupNetwork(); // 開設新房間前徹底清理舊狀態
             isLocalMode = false;
             document.getElementById('home-status').innerText = '正在建立連線...';
             
-            if (createTimeoutTimer) clearTimeout(createTimeoutTimer);
             const customId = generateRoomId();
             myRole = 'A'; 
             let connectionEstablished = false;
@@ -696,21 +812,36 @@
                 if (!roomIdDisplay || roomIdDisplay.innerText === '------') {
                     document.getElementById('home-status').innerText = '❌ 建立房間連線超時，請重試';
                     showNotification('建立房間超時，請檢查網路狀態！', 'error');
-                    showScreen('home-screen');
+                    goHome();
                 }
             }, 8000);
 
             const fallbackToMqtt = () => {
                 if (connectionEstablished) return;
-                console.log("[網絡備援] 自動切換至 MQTT 雲端中繼連線 (跨網絡 100% 成功)");
+                console.log("[網絡備援] 自動切換至中繼連線");
                 if (peer) { try { peer.destroy(); } catch(e){} peer = null; }
                 
-                conn = new MqttRelayP2P(customId, true);
+                try {
+                    conn = new MqttRelayP2P(customId, true);
+                } catch(e) {
+                    conn = new LocalBroadcastP2P(customId, true);
+                }
+
+                setTimeout(() => {
+                    if (conn && !conn.open && !(conn instanceof LocalBroadcastP2P)) {
+                        console.log("[網絡備援] 切換至 Local BroadcastChannel 模式");
+                        try { conn.close(); } catch(e){}
+                        conn = new LocalBroadcastP2P(customId, true);
+                        setupConnection();
+                    }
+                }, 1000);
+
                 setupConnection();
                 updateLobbyRoleUI();
                 document.getElementById('display-room-id').innerText = customId;
                 showScreen('lobby-screen');
-                document.getElementById('home-status').innerText = '已自動啟用雲端中繼通道';
+                startEmptyRoomTimer();
+                document.getElementById('home-status').innerText = '已啟用通訊頻道';
                 document.getElementById('opp-ready-status').innerText = '已連線，未準備';
                 document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
                 document.getElementById('btn-ready').disabled = false;
@@ -729,11 +860,17 @@
                     updateLobbyRoleUI();
                     document.getElementById('display-room-id').innerText = id;
                     showScreen('lobby-screen');
+                    startEmptyRoomTimer();
                     document.getElementById('home-status').innerText = '';
                 });
 
                 peer.on('connection', (connection) => {
                     connectionEstablished = true;
+                    isOpponentConnected = true;
+                    if (emptyRoomTimer) {
+                        clearTimeout(emptyRoomTimer);
+                        emptyRoomTimer = null;
+                    }
                     conn = connection;
                     setupConnection();
                     document.getElementById('opp-ready-status').innerText = '已連線，未準備';
@@ -757,6 +894,7 @@
         }
 
         function joinRoom() {
+            cleanupNetwork(); // 加入房間前徹底清理舊狀態
             isLocalMode = false;
             const inputEl = document.getElementById('join-room-id');
             const roomId = (inputEl ? inputEl.value : "").trim().toUpperCase();
@@ -767,42 +905,100 @@
                 return;
             }
 
-            if (joinTimeoutTimer) clearTimeout(joinTimeoutTimer);
-            document.getElementById('home-status').innerText = '正在連線至房間 ' + roomId + '...';
+            const statusEl = document.getElementById('home-status');
+            if (statusEl) statusEl.innerText = '正在尋找並連線至房間 ' + roomId + '...';
             myRole = 'B';
             let connectionEstablished = false;
 
-            // 7 秒內未成功連線則自動跳出提示並切回首頁
+            const handleJoinFailure = (msg) => {
+                if (connectionEstablished) return;
+                cleanupNetwork();
+                if (statusEl) statusEl.innerText = '❌ ' + (msg || '連線失敗');
+                showNotification('❌ ' + (msg || '找不到房間，請確認 6 碼 ID！'), 'error');
+            };
+
+            // 超時處理：若 6 秒內未成功與房主建立連線，停留在首頁並跳出提示
             joinTimeoutTimer = setTimeout(() => {
                 if (!connectionEstablished) {
-                    console.warn("[連線逾時] 找不到房間或對手未回應");
-                    if (conn) { try { conn.close(); } catch(e){} conn = null; }
-                    if (peer) { try { peer.destroy(); } catch(e){} peer = null; }
-
-                    document.getElementById('home-status').innerText = '❌ 找不到房間或連線逾時';
-                    showNotification('找不到房間或連線超時，請確認 6 碼 ID！', 'error');
-                    showScreen('home-screen');
+                    console.warn("[連線逾時] 找不到房間或房主未回應");
+                    handleJoinFailure('找不到房間或連線超時！');
                 }
-            }, 7000);
+            }, 6000);
+
+            const handleJoinSuccess = () => {
+                if (connectionEstablished) return;
+                connectionEstablished = true;
+                if (joinTimeoutTimer) {
+                    clearTimeout(joinTimeoutTimer);
+                    joinTimeoutTimer = null;
+                }
+                setupConnection();
+                updateLobbyRoleUI();
+                const roomIdDisplay = document.getElementById('display-room-id');
+                if (roomIdDisplay) roomIdDisplay.innerText = roomId;
+                
+                // 只有在與房主連線成功開啟後，才切換畫面至連線大廳！
+                showScreen('lobby-screen');
+                
+                const oppReadyStatus = document.getElementById('opp-ready-status');
+                if (oppReadyStatus) {
+                    oppReadyStatus.innerText = '已連線，未準備';
+                    oppReadyStatus.className = 'text-red-500 font-bold text-xs';
+                }
+                const btnReady = document.getElementById('btn-ready');
+                if (btnReady) btnReady.disabled = false;
+
+                if (statusEl) statusEl.innerText = '';
+
+                if (customMyName && conn && conn.open) {
+                    conn.send({ type: 'UPDATE_NAME', name: customMyName });
+                }
+            };
 
             const fallbackToMqtt = () => {
                 if (connectionEstablished) return;
-                console.log("[網絡備援] 客戶端切換至 MQTT 雲端中繼連線");
+                console.log("[網絡備援] 客戶端嘗試中繼連線");
                 if (peer) { try { peer.destroy(); } catch(e){} peer = null; }
 
-                conn = new MqttRelayP2P(roomId, false);
-                setupConnection();
-                updateLobbyRoleUI();
-                document.getElementById('display-room-id').innerText = roomId;
-                showScreen('lobby-screen');
-                document.getElementById('home-status').innerText = '已啟用雲端中繼通道';
-                document.getElementById('opp-ready-status').innerText = '已連線，未準備';
-                document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
-                document.getElementById('btn-ready').disabled = false;
-
-                if (customMyName) {
-                    conn.send({ type: 'UPDATE_NAME', name: customMyName });
+                try {
+                    conn = new MqttRelayP2P(roomId, false);
+                } catch(e) {
+                    conn = new LocalBroadcastP2P(roomId, false);
                 }
+
+                setTimeout(() => {
+                    if (conn && !conn.open && !(conn instanceof LocalBroadcastP2P)) {
+                        try { conn.close(); } catch(e){}
+                        conn = new LocalBroadcastP2P(roomId, false);
+                        setupConnection();
+                    }
+                }, 1000);
+
+                // 發送握手訊號驗證房主是否存在
+                let pingCount = 0;
+                let pingInterval = setInterval(() => {
+                    pingCount++;
+                    if (conn && conn.open) {
+                        conn.send({ type: 'PING_HOST' });
+                    }
+                    if (pingCount > 5) {
+                        clearInterval(pingInterval);
+                    }
+                }, 800);
+
+                conn.on('data', (data) => {
+                    if (data.type === 'PONG_HOST' || data.type === 'READY' || data.type === 'UPDATE_NAME') {
+                        clearInterval(pingInterval);
+                        handleJoinSuccess();
+                    }
+                });
+
+                setTimeout(() => {
+                    clearInterval(pingInterval);
+                    if (!connectionEstablished) {
+                        handleJoinFailure('找不到此房間 ID！');
+                    }
+                }, 5000);
             };
 
             if (typeof Peer === 'undefined') {
@@ -814,32 +1010,18 @@
                 peer = new Peer(PEER_OPTIONS);
 
                 peer.on('open', (id) => {
-                    updateLobbyRoleUI();
-                    document.getElementById('display-room-id').innerText = roomId;
-
                     conn = peer.connect(roomId, { reliable: true });
 
                     const connectTimeout = setTimeout(() => {
                         if (!connectionEstablished) {
-                            console.warn("WebRTC P2P 穿透逾時，轉接 MQTT 中繼通道");
+                            console.warn("WebRTC P2P 穿透逾時，切換 MQTT 嘗試");
                             fallbackToMqtt();
                         }
-                    }, 3500);
+                    }, 3000);
 
                     conn.on('open', () => {
                         clearTimeout(connectTimeout);
-                        if (joinTimeoutTimer) clearTimeout(joinTimeoutTimer);
-                        connectionEstablished = true;
-                        setupConnection();
-                        showScreen('lobby-screen');
-                        document.getElementById('opp-ready-status').innerText = '已連線，未準備';
-                        document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
-                        document.getElementById('btn-ready').disabled = false;
-                        document.getElementById('home-status').innerText = '';
-
-                        if (customMyName) {
-                            conn.send({ type: 'UPDATE_NAME', name: customMyName });
-                        }
+                        handleJoinSuccess();
                     });
 
                     conn.on('error', (err) => {
@@ -849,7 +1031,13 @@
                 });
 
                 peer.on('error', (err) => {
-                    fallbackToMqtt();
+                    console.warn("PeerJS 錯誤:", err);
+                    if (err && err.type === 'peer-unavailable') {
+                        // 確定房主 Peer ID 不存在，直接宣佈失敗
+                        handleJoinFailure('找不到此房間 ID！');
+                    } else {
+                        fallbackToMqtt();
+                    }
                 });
 
             } catch (err) {
@@ -862,40 +1050,6 @@
             if (text === '------') return;
             navigator.clipboard.writeText(text);
             showNotification(`房間 ID (${text}) 已複製！`, 'cyan');
-        }
-
-        function setupConnection() {
-            conn.on('data', (data) => {
-                if (joinTimeoutTimer) clearTimeout(joinTimeoutTimer);
-                if (createTimeoutTimer) clearTimeout(createTimeoutTimer);
-                if (data.type === 'READY') {
-                    oppReady = data.status;
-                    const statusEl = document.getElementById('opp-ready-status');
-                    if (statusEl) {
-                        statusEl.innerText = oppReady ? '已準備' : '未準備';
-                        statusEl.className = oppReady ? 'text-green-400 font-bold text-xs' : 'text-red-500 font-bold text-xs';
-                    }
-                    checkBothReady();
-                } 
-                else if (data.type === 'UPDATE_NAME') {
-                    customOppName = (data.name || "").slice(0, 10);
-                    updateLobbyRoleUI();
-                }
-                else if (data.type === 'START_TOSS') {
-                    runCoinToss(data.first);
-                } 
-                else if (data.type === 'MOVE') {
-                    makeMove(data.r, data.c, true);
-                }
-                else if (data.type === 'PLAY_AGAIN') {
-                    resetLobby();
-                }
-            });
-
-            conn.on('close', () => {
-                showNotification('對手已離開房間！', 'warning');
-                goHome();
-            });
         }
 
         function toggleReady() {
@@ -933,13 +1087,11 @@
         function resetLobby() {
             myReady = false;
             oppReady = conn && conn.open;
-            
             const myStatus = document.getElementById('my-ready-status');
             if (myStatus) {
                 myStatus.innerText = '未準備';
                 myStatus.className = 'text-red-500 font-bold text-xs';
             }
-            
             const oppStatus = document.getElementById('opp-ready-status');
             if (oppStatus) {
                 oppStatus.innerText = oppReady ? '已連線，未準備' : '斷線';
@@ -978,24 +1130,20 @@
                 ticks++;
                 const isATurn = (ticks % 2 === 0);
                 
-                if (coinEl) {
-                    coinEl.style.transform = `scale(${1 + (ticks % 3) * 0.06}) rotateY(${ticks * 45}deg)`;
-                }
+                if (coinEl) coinEl.style.transform = `scale(${1 + (ticks % 3) * 0.06}) rotateY(${ticks * 45}deg)`;
                 
-                if (isATurn) {
-                    if (coinEl) {
+                if (coinEl && coinText) {
+                    if (isATurn) {
                         coinEl.style.borderColor = COLORS.cyan;
                         coinEl.style.color = COLORS.cyan;
                         coinEl.style.boxShadow = `0 0 30px ${COLORS.cyan}`;
-                    }
-                    if (coinText) coinText.innerText = nameA;
-                } else {
-                    if (coinEl) {
+                        coinText.innerText = nameA;
+                    } else {
                         coinEl.style.borderColor = COLORS.crimson;
                         coinEl.style.color = COLORS.crimson;
                         coinEl.style.boxShadow = `0 0 30px ${COLORS.crimson}`;
+                        coinText.innerText = nameB;
                     }
-                    if (coinText) coinText.innerText = nameB;
                 }
 
                 if (ticks >= maxTicks) {
@@ -1005,23 +1153,17 @@
                     firstPlayer = preDeterminedFirst;
                     const firstName = (firstPlayer === 'A') ? nameA : nameB;
 
-                    if (firstPlayer === 'A') {
-                        if (coinEl) {
+                    if (coinEl && coinText && resultText) {
+                        if (firstPlayer === 'A') {
                             coinEl.style.borderColor = COLORS.cyan;
                             coinEl.style.color = COLORS.cyan;
-                        }
-                        if (coinText) coinText.innerText = nameA;
-                        if (resultText) {
+                            coinText.innerText = nameA;
                             resultText.innerText = `⚡ ${firstName} 獲得先攻權 (先手 1)`;
                             resultText.className = 'text-base sm:text-lg font-bold h-8 tracking-wider text-cyan-400 font-["Chakra_Petch"] tech-glow-cyan';
-                        }
-                    } else {
-                        if (coinEl) {
+                        } else {
                             coinEl.style.borderColor = COLORS.crimson;
                             coinEl.style.color = COLORS.crimson;
-                        }
-                        if (coinText) coinText.innerText = nameB;
-                        if (resultText) {
+                            coinText.innerText = nameB;
                             resultText.innerText = `⚡ ${firstName} 獲得先攻權 (先手 1)`;
                             resultText.className = 'text-base sm:text-lg font-bold h-8 tracking-wider text-pink-500 font-["Chakra_Petch"] tech-glow-crimson';
                         }
@@ -1039,7 +1181,6 @@
             boardState = {};
             winningPath = null;
             lastNotifiedTurnPlayer = null;
-
             const winModal = document.getElementById('win-modal');
             if (winModal) {
                 winModal.style.display = 'none';
@@ -1080,20 +1221,20 @@
             const dot = document.getElementById('ui-turn-dot');
             const text = document.getElementById('ui-turn-text');
 
-            if (!dot || !text) return;
-
             const displayName = getPlayerDisplayName(player);
             let turnTag = "";
             if (!isLocalMode) {
                 turnTag = (player === myRole) ? " (你的回合)" : " (對手回合)";
             }
 
-            if (player === 'A') {
-                dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-cyan-400 inline-block shadow-[0_0_12px_#00f3ff] flex-shrink-0";
-                text.innerHTML = `輪到 <span class="text-cyan-400 font-bold">${displayName}</span>${turnTag} 下子 (剩餘 <span class="font-bold">${remaining}</span> 顆)`;
-            } else {
-                dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0";
-                text.innerHTML = `輪到 <span class="text-pink-500 font-bold">${displayName}</span>${turnTag} 下子 (剩餘 <span class="font-bold">${remaining}</span> 顆)`;
+            if (dot && text) {
+                if (player === 'A') {
+                    dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-cyan-400 inline-block shadow-[0_0_12px_#00f3ff] flex-shrink-0";
+                    text.innerHTML = `輪到 <span class="text-cyan-400 font-bold">${displayName}</span>${turnTag} 下子 (剩餘 <span class="font-bold">${remaining}</span> 顆)`;
+                } else {
+                    dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0";
+                    text.innerHTML = `輪到 <span class="text-pink-500 font-bold">${displayName}</span>${turnTag} 下子 (剩餘 <span class="font-bold">${remaining}</span> 顆)`;
+                }
             }
 
             if (!winningPath && lastNotifiedTurnPlayer !== player) {
@@ -1292,7 +1433,6 @@
             ctx.restore();
         }
 
-        // --- 控制輸入處理 ---
         function setupCanvasEvents() {
             let touchStartX = 0;
             let touchStartY = 0;
@@ -1363,6 +1503,62 @@
             canvas.addEventListener('touchend', (e) => {
                 if (!isTouchMove) {
                     handleClick(e);
+                }
+            });
+        }
+
+        function setupConnection() {
+            conn.on('data', (data) => {
+                if (joinTimeoutTimer) clearTimeout(joinTimeoutTimer);
+                if (createTimeoutTimer) clearTimeout(createTimeoutTimer);
+
+                // 收到對手任何數據即標記對手已連線，並取消 10 分鐘空房計時
+                if (!isOpponentConnected && myRole === 'A') {
+                    isOpponentConnected = true;
+                    if (emptyRoomTimer) {
+                        clearTimeout(emptyRoomTimer);
+                        emptyRoomTimer = null;
+                    }
+                }
+
+                if (data.type === 'PING_HOST' && myRole === 'A') {
+                    if (conn && conn.open) {
+                        conn.send({ type: 'PONG_HOST' });
+                        if (customMyName) {
+                            conn.send({ type: 'UPDATE_NAME', name: customMyName });
+                        }
+                    }
+                    return;
+                }
+                if (data.type === 'READY') {
+                    oppReady = data.status;
+                    const statusEl = document.getElementById('opp-ready-status');
+                    if (statusEl) {
+                        statusEl.innerText = oppReady ? '已準備' : '未準備';
+                        statusEl.className = oppReady ? 'text-green-400 font-bold text-xs' : 'text-red-500 font-bold text-xs';
+                    }
+                    checkBothReady();
+                } 
+                else if (data.type === 'UPDATE_NAME') {
+                    customOppName = (data.name || "").slice(0, 10);
+                    updateLobbyRoleUI();
+                }
+                else if (data.type === 'START_TOSS') {
+                    runCoinToss(data.first);
+                } 
+                else if (data.type === 'MOVE') {
+                    makeMove(data.r, data.c, true);
+                }
+                else if (data.type === 'PLAY_AGAIN') {
+                    resetLobby();
+                }
+            });
+
+            conn.on('close', () => {
+                // 只有在對手確實曾連入過的情況下，才跳出對手離線通知並退回首頁
+                if (isOpponentConnected) {
+                    showNotification('對手已離開房間！', 'warning');
+                    goHome();
                 }
             });
         }
@@ -1539,18 +1735,7 @@
         }
 
         function goHome() {
-            const currentConn = conn;
-            conn = null;
-            if (currentConn) {
-                try { currentConn.close(); } catch(e){}
-            }
-
-            const currentPeer = peer;
-            peer = null;
-            if (currentPeer) {
-                try { currentPeer.destroy(); } catch(e){}
-            }
-
+            cleanupNetwork();
             const winModal = document.getElementById('win-modal');
             if (winModal) {
                 winModal.style.display = 'none';
