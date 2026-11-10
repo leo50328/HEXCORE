@@ -322,8 +322,11 @@
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     下載過程圖 (含顏色與數字)
                 </button>
-                <button onclick="playAgain()" class="cyber-btn w-full py-3.5 text-sm font-['Chakra_Petch'] tracking-widest tech-glow-white cursor-pointer">
-                    回到大廳
+                <button id="modal-restart-btn" onclick="playAgain()" class="cyber-btn w-full py-3.5 text-sm font-['Chakra_Petch'] tracking-widest tech-glow-white cursor-pointer">
+                    再玩一局 RESTART
+                </button>
+                <button id="modal-home-btn" onclick="goHome()" class="cyber-btn cyber-btn-neutral w-full py-3.5 text-sm font-['Chakra_Petch'] tracking-widest cursor-pointer">
+                    回到首頁 HOME
                 </button>
             </div>
         </div>
@@ -1681,6 +1684,8 @@
             const modal = document.getElementById('win-modal');
             const titleEl = document.getElementById('modal-winner-title');
             const descEl = document.getElementById('modal-winner-desc');
+            const restartBtn = document.getElementById('modal-restart-btn');
+            const homeBtn = document.getElementById('modal-home-btn');
 
             const winnerName = getPlayerDisplayName(winner);
 
@@ -1696,6 +1701,14 @@
 
             if (descEl) {
                 descEl.innerText = (winner === 'A') ? 'SYSTEM CONNECTED: LEFT ➔ RIGHT' : 'SYSTEM CONNECTED: TOP ➔ BOTTOM';
+            }
+
+            // 動態更新結算畫面的按鈕文字與顯示邏輯
+            if (restartBtn) {
+                restartBtn.innerText = isLocalMode ? "再玩一局 RESTART" : "回到大廳 LOBBY";
+            }
+            if (homeBtn) {
+                homeBtn.style.display = isLocalMode ? 'block' : 'none';
             }
 
             if (modal) {
@@ -1727,11 +1740,7 @@
         }
 
         function returnToLobbyOrHome() {
-            if (isLocalMode) {
-                goHome();
-            } else {
-                resetLobby();
-            }
+            goHome();
         }
 
         function goHome() {
