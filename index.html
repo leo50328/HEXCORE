@@ -408,10 +408,10 @@
     </div>
 
     <!-- Center Interactive Parallelogram Canvas -->
-        <div id="canvas-wrapper" class="relative">
+        <div id="canvas-wrapper" class="relative pointer-events-auto">
             <!-- 浮動氣泡動畫容器 -->
             <div id="emote-pop-container" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
-            <canvas id="gameCanvas"></canvas>
+            <canvas id="gameCanvas" class="pointer-events-auto"></canvas>
         </div>
     </div>
 
@@ -576,6 +576,7 @@
 
         window.addEventListener('load', () => {
             showScreen('home-screen');
+            loadEmoteHistory();
             setupCanvasEvents();
             setupResizeObserver();
             resizeCanvas();
@@ -583,12 +584,28 @@
         });
 
         window.addEventListener('resize', resizeCanvas);
+        // 自訂表情與文字歷史紀錄 (上限 6 個，先進先出) 與最小化狀態
+        let customHistoryList = ['👍', '😎', '⚡', '🔥', '💀', '👏'];
+        const MAX_HISTORY = 6;
+        let isEmoteBarMinimized = false;
 
-        function openRulesModal() {
-            const modal = document.getElementById('rules-modal');
-            if (modal) {
-                modal.style.display = 'flex';
-            }
+        function loadEmoteHistory() {
+            try {
+                const saved = localStorage.getItem('hexcore_emotes');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        customHistoryList = parsed.slice(0, MAX_HISTORY);
+                    }
+                }
+            } catch(e) {}
+        }
+
+        function saveEmoteHistory(list) {
+            try {
+                localStorage.setItem('hexcore_emotes', JSON.stringify(list));
+            } catch(e) {}
+        }
         }
 
         function closeRulesModal() {
@@ -721,7 +738,8 @@
             input.value = ''; 
             renderCustomHistory();
 
-            // 儲存至持久化資料庫
+            // 儲存至本地快取與持久化資料庫
+            saveEmoteHistory(customHistoryList);
             if (typeof window.saveEmoteHistoryToCloud === 'function') {
                 window.saveEmoteHistoryToCloud(customHistoryList);
             }
@@ -1661,109 +1679,109 @@
 
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) return { x: 0, y: 0 };
+            
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX = 0, clientY = 0;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+            } else if (e.clientX !== undefined) {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function setupCanvasEvents() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isTouchMove = false;
+            let lastTouchTime = 0;
+
+            function handleMove(e) {
+                const pos = getCanvasCoords(e);
+                const found = findNearestHex(pos.x, pos.y);
+                if (found !== hoveredCell) {
+                    hoveredCell = found;
+                    drawBoard();
+                }
+            }
+
+            function handleClick(e) {
+                // Prevent duplicate trigger from synthesized click events after touch
+                if (e.type === 'click' && Date.now() - lastTouchTime < 500) {
+                    return;
+                }
+                if (e.type === 'touchend') {
+                    lastTouchTime = Date.now();
+                }
+
+                if (!isLocalMode && getCurrentPlayer() !== myRole) return; 
+
+                const pos = getCanvasCoords(e);
+                const hex = findNearestHex(pos.x, pos.y);
+                if (hex) {
+                    makeMove(hex.r, hex.c, false);
+                }
+            }
+
+            canvas.addEventListener('mousemove', handleMove);
+            canvas.addEventListener('click', handleClick);
+
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    isTouchMove = false;
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) {
+                    const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                    if (dx > 10 || dy > 10) {
+                        isTouchMove = true;
+                    }
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchend', (e) => {
+                if (!isTouchMove) {
+                    handleClick(e);
+                }
+            });
+        }
+
+        function findNearestHex(mx, my) {
+            let minDistance = Infinity;
+            let nearest = null;
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
                     const { x, y } = getHexCenter(r, c);
                     const dist = Math.hypot(mx - x, my - y);
-                    if (dist < hexRadius * 0.95 && dist < minDistance) {
+                    if (dist < minDistance) {
                         minDistance = dist;
                         nearest = { r, c };
                     }
                 }
             }
-            return nearest;
-        }
-
-        function makeMove(r, c, isRemote = false) {
-            if (winningPath) return; 
-            const key = `${r},${c}`;
-            if (boardState[key]) return; 
-
-            const step = getCurrentStep();
-            const player = getCurrentPlayer();
-
-            if (!isLocalMode && !isRemote && conn && conn.open) {
-                conn.send({ type: 'MOVE', r: r, c: c });
+            // Seamless hexagonal coverage without dead spots across all 121 cells
+            if (nearest && minDistance <= hexRadius * 1.02) {
+                return nearest;
             }
-
-            boardState[key] = { color: player, step };
-            moveHistory.push({ r, c, color: player, step });
-
-            updateUI();
-            drawBoard();
-
-            const winPath = checkWin(player);
-            if (winPath) {
-                winningPath = winPath;
-                drawBoard();
-
-                setTimeout(() => {
-                    triggerGameOver(player, winPath);
-                }, 400);
-            }
-        }
-
-        function getNeighbors(r, c) {
-            const neighbors = [
-                { r: r,     c: c - 1 }, 
-                { r: r,     c: c + 1 }, 
-                { r: r - 1, c: c     }, 
-                { r: r - 1, c: c + 1 }, 
-                { r: r + 1, c: c - 1 }, 
-                { r: r + 1, c: c     }  
-            ];
-            return neighbors.filter(n => n.r >= 0 && n.r < GRID_SIZE && n.c >= 0 && n.c < GRID_SIZE);
-        }
-
-        function checkWin(player) {
-            const queue = [];
-            const visited = new Set();
-            const parentMap = {};
-
-            if (player === 'B') {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    const key = `0,${c}`;
-                    if (boardState[key] && boardState[key].color === 'B') {
-                        queue.push({ r: 0, c });
-                        visited.add(key);
-                    }
-                }
-            } else { 
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    const key = `${r},0`;
-                    if (boardState[key] && boardState[key].color === 'A') {
-                        queue.push({ r, c: 0 });
-                        visited.add(key);
-                    }
-                }
-            }
-
-            while (queue.length > 0) {
-                const curr = queue.shift();
-                const currKey = `${curr.r},${curr.c}`;
-
-                if ((player === 'B' && curr.r === GRID_SIZE - 1) ||
-                    (player === 'A' && curr.c === GRID_SIZE - 1)) {
-                    
-                    const path = [curr];
-                    let pKey = currKey;
-                    while (parentMap[pKey]) {
-                        const parent = parentMap[pKey];
-                        path.unshift(parent);
-                        pKey = `${parent.r},${parent.c}`;
-                    }
-                    return path;
-                }
-
-                const neighbors = getNeighbors(curr.r, curr.c);
-                for (let n of neighbors) {
-                    const nKey = `${n.r},${n.c}`;
-                    if (!visited.has(nKey) && boardState[nKey] && boardState[nKey].color === player) {
-                        visited.add(nKey);
-                        parentMap[nKey] = curr;
-                        queue.push(n);
-                    }
-                }
-            }
-
             return null;
         }
 
