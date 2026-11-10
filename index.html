@@ -354,16 +354,13 @@
                 </span>
             </div>
 
-            <!-- 控制列：音效開關 & 離開對局 -->
-        <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-            <button id="sfx-toggle-btn" onclick="toggleSFX()" class="px-2 py-1 rounded-lg border border-slate-600/80 bg-slate-800/80 text-[10px] sm:text-xs font-bold text-cyan-400 hover:bg-slate-700 cursor-pointer">
-                🔊 音效: 開
-            </button>
-            <button id="top-return-btn" onclick="returnToLobbyOrHome()" class="px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-lg border border-slate-600/80 bg-slate-800/80 hover:bg-slate-700 text-[10px] sm:text-xs font-bold text-gray-200 tracking-wider font-['Chakra_Petch'] transition-colors shadow-sm cursor-pointer hover:text-cyan-400">
-                離開對局
-            </button>
+            <!-- 控制列：離開對局 -->
+            <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                <button id="top-return-btn" onclick="returnToLobbyOrHome()" class="px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-lg border border-slate-600/80 bg-slate-800/80 hover:bg-slate-700 text-[10px] sm:text-xs font-bold text-gray-200 tracking-wider font-['Chakra_Petch'] transition-colors shadow-sm cursor-pointer hover:text-cyan-400">
+                    離開對局
+                </button>
+            </div>
         </div>
-    </div>
 
     <!-- 多人快捷互動表情與罐頭訊息列 (可最小化) -->
     <div id="emote-bar" class="w-full max-w-[840px] flex flex-col bg-black/60 border border-slate-700/80 rounded-xl backdrop-blur-md shadow-lg z-20 mb-1.5 sm:mb-2 overflow-hidden transition-all">
@@ -376,33 +373,33 @@
         </div>
 
         <!-- 可摺疊內容區域 -->
-        <div id="emote-content-box" class="p-2 sm:p-2.5 flex flex-col gap-2">
-            <!-- 上排：表情符號 + 新增表情按鈕 (上限 6 個，先進先出) -->
-            <div class="flex flex-wrap items-center justify-between gap-1.5">
-                <div id="emoji-list-container" class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <!-- 動態渲染表情按鈕 -->
-                </div>
-                <!-- 新增表情輸入框與按鈕 -->
-                <div class="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-slate-800 ml-auto" onclick="event.stopPropagation()">
-                    <input id="new-emoji-input" type="text" maxlength="2" placeholder="表情" onkeydown="if(event.key==='Enter') addCustomEmoji()" class="w-10 sm:w-12 bg-slate-900 border border-slate-700 text-white text-center text-xs p-1 rounded outline-none focus:border-cyan-400">
-                    <button onclick="addCustomEmoji()" class="px-2 py-1 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 text-xs font-bold rounded cursor-pointer whitespace-nowrap hover:scale-105 transition-all">
-                        + 新增
-                    </button>
-                </div>
-            </div>
+        <div id="emote-content-box" class="p-2 sm:p-2.5 flex flex-col gap-2.5">
             
-            <!-- 下排：預設訊息 + 自訂即時輸入 -->
-            <div class="flex flex-wrap items-center justify-between gap-1.5 pt-2 border-t border-slate-800/80">
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <button onclick="sendEmote('好棋！')" class="px-2.5 py-1 rounded bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyan-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">好棋！</button>
-                    <button onclick="sendEmote('思考中...')" class="px-2.5 py-1 rounded bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/40 text-purple-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">思考中...</button>
-                    <button onclick="sendEmote('快點啦~')" class="px-2.5 py-1 rounded bg-pink-950/60 hover:bg-pink-900/80 border border-pink-500/40 text-pink-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">快點啦~</button>
+            <!-- 罐頭訊息 (新增更多選項) -->
+            <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-[10px] text-gray-400 mr-1 hidden sm:inline">罐頭:</span>
+                <button onclick="sendEmote('好棋！')" class="px-2 py-1 rounded bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyan-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">好棋！</button>
+                <button onclick="sendEmote('思考中...')" class="px-2 py-1 rounded bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/40 text-purple-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">思考中...</button>
+                <button onclick="sendEmote('快點啦~')" class="px-2 py-1 rounded bg-pink-950/60 hover:bg-pink-900/80 border border-pink-500/40 text-pink-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">快點啦~</button>
+                <button onclick="sendEmote('太神啦！')" class="px-2 py-1 rounded bg-yellow-950/60 hover:bg-yellow-900/80 border border-yellow-500/40 text-yellow-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">太神啦！</button>
+                <button onclick="sendEmote('手滑了...')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-500/40 text-slate-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">手滑了...</button>
+                <button onclick="sendEmote('GG')" class="px-2 py-1 rounded bg-red-950/60 hover:bg-red-900/80 border border-red-500/40 text-red-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">GG</button>
+                <button onclick="sendEmote('再來一局？')" class="px-2 py-1 rounded bg-green-950/60 hover:bg-green-900/80 border border-green-500/40 text-green-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">再來一局？</button>
+            </div>
+
+            <!-- 自訂歷史與輸入列 (圖文共用，上限6個) -->
+            <div class="flex flex-wrap items-center justify-between gap-1.5 pt-1.5 border-t border-slate-800/80">
+                <div class="flex items-center gap-1.5 overflow-hidden">
+                    <span class="text-[10px] text-gray-400 mr-1 hidden sm:inline">歷史:</span>
+                    <div id="custom-history-container" class="flex flex-wrap items-center gap-1.5">
+                        <!-- 動態渲染自訂歷史紀錄 -->
+                    </div>
                 </div>
                 
-                <!-- 自訂輸入訊息 (不做紀錄) -->
-                <div class="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-slate-800 flex-grow sm:flex-grow-0 sm:w-64 ml-auto" onclick="event.stopPropagation()">
-                    <input id="custom-msg-input" type="text" maxlength="20" placeholder="輸入自訂訊息..." onkeydown="if(event.key==='Enter') sendCustomMsg()" class="w-full bg-slate-900 border border-slate-700 text-white text-xs p-1 px-2 rounded outline-none focus:border-purple-400">
-                    <button onclick="sendCustomMsg()" class="px-2.5 py-1 bg-purple-950/80 hover:bg-purple-900 border border-purple-500/50 text-purple-300 text-xs font-bold rounded cursor-pointer whitespace-nowrap hover:scale-105 transition-all">
+                <!-- 自訂輸入文字/表情 -->
+                <div class="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-slate-800 flex-grow sm:flex-grow-0 ml-auto" onclick="event.stopPropagation()">
+                    <input id="custom-msg-input" type="text" maxlength="20" placeholder="輸入表情或文字..." onkeydown="if(event.key==='Enter') sendCustomMsg()" class="w-full sm:w-40 bg-slate-900 border border-slate-700 text-white text-xs p-1 px-2 rounded outline-none focus:border-cyan-400">
+                    <button onclick="sendCustomMsg()" class="px-2.5 py-1 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 text-xs font-bold rounded cursor-pointer whitespace-nowrap hover:scale-105 transition-all">
                         發送
                     </button>
                 </div>
@@ -442,6 +439,71 @@
         </div>
     </div>
 
+    <!-- Firebase SDK 持久化儲存模組 (表情與訊息歷史紀錄) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hex-core-app';
+
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        async function initFirebase() {
+            if (typeof __firebase_config === 'undefined') return;
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUser = auth.currentUser;
+                if (currentUser) {
+                    listenEmoteHistory();
+                }
+            } catch(e) {
+                console.warn('Firebase 持久化設定提示:', e);
+            }
+        }
+
+        function listenEmoteHistory() {
+            if (!db || !currentUser) return;
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'userSettings', 'emotes');
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (Array.isArray(data.list) && data.list.length > 0) {
+                        window.customHistoryList = data.list;
+                        if (typeof window.renderCustomHistory === 'function') {
+                            window.renderCustomHistory();
+                        }
+                    }
+                }
+            }, (error) => {
+                console.warn('讀取歷史紀錄失敗:', error);
+            });
+        }
+
+        window.saveEmoteHistoryToCloud = async function(list) {
+            if (!db || !currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'userSettings', 'emotes');
+                await setDoc(docRef, { list: list, updatedAt: Date.now() }, { merge: true });
+            } catch(e) {
+                console.warn('保存歷史紀錄失敗:', error);
+            }
+        };
+
+        initFirebase();
+    </script>
+
     <!-- JavaScript Logic -->
     <script>
         const COLORS = {
@@ -477,6 +539,9 @@
         let peer = null;
         let conn = null;
         let bcChannel = null;
+        let mqttClient = null;
+        let bcAdapter = null;
+        let mqttAdapter = null;
         let myRole = null;
         let customMyName = "";
         let customOppName = "";
@@ -489,19 +554,16 @@
         let winningPath = null;
         let hoveredCell = null;
         let lastNotifiedTurnPlayer = null; 
-        let sfxEnabled = true;
 
-        // 表情佇列 (上限 6 個，先進先出) 與最小化狀態
-        let emojiList = ['👍', '😎', '⚡', '🔥', '💀', '👏'];
-        const MAX_EMOJIS = 6;
+        // 自訂表情與文字歷史紀錄 (上限 6 個，先進先出) 與最小化狀態
+        let customHistoryList = ['👍', '😎', '⚡', '🔥', '💀', '👏'];
+        const MAX_HISTORY = 6;
         let isEmoteBarMinimized = false;
 
         let emptyRoomTimer = null;
         let joinTimeoutTimer = null;
         let createTimeoutTimer = null;
         let isOpponentConnected = false;
-
-        let audioCtx = null;
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -517,75 +579,10 @@
             setupCanvasEvents();
             setupResizeObserver();
             resizeCanvas();
-            renderEmojiList();
+            renderCustomHistory();
         });
 
         window.addEventListener('resize', resizeCanvas);
-
-        // Web Audio API Synthesizer
-        function playSFX(type) {
-            if (!sfxEnabled) return;
-            try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                const now = audioCtx.currentTime;
-
-                if (type === 'place') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(440, now);
-                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-                    gain.gain.setValueAtTime(0.15, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-                    osc.start(now);
-                    osc.stop(now + 0.08);
-                } else if (type === 'emote') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(600, now);
-                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-                    osc.start(now);
-                    osc.stop(now + 0.12);
-                } else if (type === 'win') {
-                    const notes = [523.25, 659.25, 783.99, 1046.50];
-                    notes.forEach((freq, idx) => {
-                        const subOsc = audioCtx.createOscillator();
-                        const subGain = audioCtx.createGain();
-                        subOsc.type = 'sine';
-                        subOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
-                        subGain.gain.setValueAtTime(0.2, now + idx * 0.1);
-                        subGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
-                        subOsc.connect(subGain);
-                        subGain.connect(audioCtx.destination);
-                        subOsc.start(now + idx * 0.1);
-                        subOsc.stop(now + idx * 0.1 + 0.25);
-                    });
-                }
-            } catch (e) {
-                console.log('Audio Context error:', e);
-            }
-        }
-
-        function toggleSFX() {
-            sfxEnabled = !sfxEnabled;
-            const btn = document.getElementById('sfx-toggle-btn');
-            if (btn) {
-                btn.innerText = sfxEnabled ? "🔊 音效: 開" : "🔇 音效: 關";
-                btn.className = sfxEnabled 
-                    ? "px-2.5 py-1 rounded-lg border border-slate-600/80 bg-slate-800/80 text-xs font-bold text-cyan-400 hover:bg-slate-700 cursor-pointer"
-                    : "px-2.5 py-1 rounded-lg border border-slate-600/80 bg-slate-800/80 text-xs font-bold text-gray-400 hover:bg-slate-700 cursor-pointer";
-            }
-        }
 
         function openRulesModal() {
             const modal = document.getElementById('rules-modal');
@@ -684,39 +681,24 @@
             }
         }
 
-        // 動態渲染表情符號清單
-        function renderEmojiList() {
-            const container = document.getElementById('emoji-list-container');
+        // 動態渲染自訂歷史紀錄清單
+        function renderCustomHistory() {
+            const container = document.getElementById('custom-history-container');
             if (!container) return;
             container.innerHTML = '';
-            emojiList.forEach(emoji => {
+            customHistoryList.forEach(msg => {
                 const btn = document.createElement('button');
                 btn.onclick = (e) => {
                     e.stopPropagation();
-                    sendEmote(emoji);
+                    sendEmote(msg);
                 };
-                btn.className = 'px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 hover:scale-110 transition-all text-sm sm:text-base cursor-pointer';
-                btn.innerText = emoji;
+                btn.className = 'px-2 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 hover:scale-110 transition-all text-xs sm:text-sm cursor-pointer truncate max-w-[80px]';
+                btn.innerText = msg;
                 container.appendChild(btn);
             });
         }
 
-        // 新增自訂表情（先進先出，維持上限 6 個）
-        function addCustomEmoji() {
-            const input = document.getElementById('new-emoji-input');
-            if (!input) return;
-            const newEmoji = input.value.trim();
-            if (!newEmoji) return;
-
-            if (emojiList.length >= MAX_EMOJIS) {
-                emojiList.shift(); // 移除最舊（第一個）表情
-            }
-            emojiList.push(newEmoji);
-            input.value = '';
-            renderEmojiList();
-        }
-
-        // 發送自訂輸入訊息（即時發送，不做紀錄）
+        // 發送自訂輸入訊息並加入歷史紀錄
         function sendCustomMsg() {
             const input = document.getElementById('custom-msg-input');
             if (!input) return;
@@ -724,7 +706,25 @@
             if (!text) return;
 
             sendEmote(text);
-            input.value = ''; // 發送後清空輸入框，不做紀錄
+
+            // 處理歷史紀錄 (若已存在先移除舊的，推入新，維持上限)
+            const existingIdx = customHistoryList.indexOf(text);
+            if (existingIdx !== -1) {
+                customHistoryList.splice(existingIdx, 1);
+            }
+            customHistoryList.push(text);
+            
+            if (customHistoryList.length > MAX_HISTORY) {
+                customHistoryList.shift();
+            }
+            
+            input.value = ''; 
+            renderCustomHistory();
+
+            // 儲存至持久化資料庫
+            if (typeof window.saveEmoteHistoryToCloud === 'function') {
+                window.saveEmoteHistoryToCloud(customHistoryList);
+            }
         }
 
         // 切換表情與訊息面板最小化/展開
@@ -751,7 +751,6 @@
         }
 
         function triggerEmoteAnimation(emoji, senderRole) {
-            playSFX('emote');
             const container = document.getElementById('emote-pop-container');
             const senderName = getPlayerDisplayName(senderRole);
 
@@ -857,47 +856,115 @@
                 try { bcChannel.close(); } catch(e){}
                 bcChannel = null;
             }
+            if (mqttClient) {
+                try { mqttClient.end(true); } catch(e){}
+                mqttClient = null;
+            }
+            bcAdapter = null;
+            mqttAdapter = null;
 
             const homeStatus = document.getElementById('home-status');
             if (homeStatus) homeStatus.innerText = '';
         }
 
-        // 廣播頻道輔助物件 (備援連線)
+        // 1. 廣播頻道輔助物件 (同裝置極速連線)
         function createBroadcastConn(roomId, role) {
             const channelName = 'HEXCORE_BC_' + roomId;
             const bc = new BroadcastChannel(channelName);
-            const listeners = {};
+            const listeners = { data: [], close: [] };
 
             const connectionObj = {
                 open: true,
                 isBroadcast: true,
+                type: 'BC',
                 send: function(data) {
                     try {
                         bc.postMessage({ sender: role, payload: data });
                     } catch(e) {}
                 },
                 on: function(event, callback) {
-                    listeners[event] = callback;
+                    if (!listeners[event]) listeners[event] = [];
+                    listeners[event].push(callback);
                 },
                 close: function() {
                     try { bc.close(); } catch(e){}
                     this.open = false;
-                    if (listeners['close']) listeners['close']();
+                    this.emit('close');
                 },
                 emit: function(event, data) {
-                    if (listeners[event]) listeners[event](data);
+                    if (listeners[event]) listeners[event].forEach(cb => cb(data));
                 }
             };
 
             bc.onmessage = (event) => {
                 if (event.data && event.data.sender !== role) {
-                    if (listeners['data']) {
-                        listeners['data'](event.data.payload);
-                    }
+                    connectionObj.emit('data', event.data.payload);
                 }
             };
 
             return { bc, connAdapter: connectionObj };
+        }
+
+        // 2. MQTT 雲端中繼連線 (100% 穿透防火牆備援)
+        function createMqttConn(roomId, role) {
+            const topicBase = 'HEXCORE_ROOM_' + roomId;
+            const myTopic = topicBase + '/' + role;
+            const oppTopic = topicBase + '/' + (role === 'A' ? 'B' : 'A');
+            
+            let client = null;
+            const listeners = { data: [], open: [], close: [] };
+            
+            const connectionObj = {
+                open: false,
+                isMqtt: true,
+                type: 'MQTT',
+                send: function(data) {
+                    if (this.open && client) {
+                        try { client.publish(myTopic, JSON.stringify(data)); } catch(e){}
+                    }
+                },
+                on: function(event, callback) {
+                    if (!listeners[event]) listeners[event] = [];
+                    listeners[event].push(callback);
+                },
+                close: function() {
+                    try { if (client) client.end(true); } catch(e){}
+                    this.open = false;
+                    this.emit('close');
+                },
+                emit: function(event, data) {
+                    if (listeners[event]) listeners[event].forEach(cb => cb(data));
+                }
+            };
+            
+            try {
+                if (typeof mqtt !== 'undefined') {
+                    client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+                        clientId: 'hexcore_' + Math.random().toString(16).substr(2, 8),
+                        clean: true,
+                        connectTimeout: 4000
+                    });
+                    
+                    client.on('connect', () => {
+                        connectionObj.open = true;
+                        client.subscribe(oppTopic);
+                        connectionObj.emit('open');
+                    });
+                    
+                    client.on('message', (topic, message) => {
+                        if (topic === oppTopic) {
+                            try {
+                                const data = JSON.parse(message.toString());
+                                connectionObj.emit('data', data);
+                            } catch(e) {}
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn("MQTT Error:", e);
+            }
+            
+            return { client, connAdapter: connectionObj };
         }
 
         function start10MinEmptyRoomTimer() {
@@ -918,107 +985,76 @@
             runCoinToss(first);
         }
 
-        // --- P2P 網路連線邏輯 ---
+        // --- 多重競速 P2P 網路連線邏輯 (房主端) ---
         function createRoom() {
             cleanupNetwork();
             isLocalMode = false;
             
-            const homeStatus = document.getElementById('home-status');
-            if (homeStatus) homeStatus.innerText = '正在建立連線...';
-
             const customId = generateRoomId();
             const fullPeerId = 'HEXCORE_ID_' + customId;
 
             myRole = 'A';
             document.getElementById('display-room-id').innerText = customId;
 
-            // 1. 本地廣播備援 (同裝置/同瀏覽器分頁 100% 直連)
-            const { bc, connAdapter } = createBroadcastConn(customId, 'A');
-            bcChannel = bc;
+            // 零延遲瞬間切換畫面
+            updateLobbyRoleUI();
+            showScreen('lobby-screen');
+            start10MinEmptyRoomTimer();
 
-            bcChannel.onmessage = (event) => {
-                if (event.data && event.data.type === 'BC_JOIN' && !isOpponentConnected) {
-                    isOpponentConnected = true;
-                    if (emptyRoomTimer) { clearTimeout(emptyRoomTimer); emptyRoomTimer = null; }
-                    conn = connAdapter;
-                    setupConnection();
-                    connAdapter.send({ type: 'BC_WELCOME' });
-                    document.getElementById('opp-ready-status').innerText = '已連線，未準備';
-                    document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
-                    document.getElementById('btn-ready').disabled = false;
-                    if (customMyName) {
-                        conn.send({ type: 'UPDATE_NAME', name: customMyName });
-                    }
-                } else if (event.data && event.data.sender !== 'A' && conn === connAdapter) {
-                    if (connAdapter.emit) connAdapter.emit('data', event.data.payload);
+            // 防線觸發器：三條連線誰先收到對手的 JOIN，就立刻鎖定該通道
+            const handleOpponentConnected = (newConn, protocolName) => {
+                if (isOpponentConnected) return; // 已經有通道確立了，忽略落後的通道
+                isOpponentConnected = true;
+                if (emptyRoomTimer) { clearTimeout(emptyRoomTimer); emptyRoomTimer = null; }
+                
+                conn = newConn; // 確立主連線
+                setupConnection();
+                
+                // 回應對手，告知鎖定成功
+                if (protocolName === 'BC') conn.send({ type: 'BC_WELCOME' });
+                else if (protocolName === 'MQTT') conn.send({ type: 'MQTT_WELCOME' });
+                else if (protocolName === 'WebRTC') conn.send({ type: 'WEBRTC_WELCOME' });
+
+                document.getElementById('opp-ready-status').innerText = `已連線 (${protocolName})`;
+                document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
+                document.getElementById('btn-ready').disabled = false;
+                
+                if (customMyName) {
+                    conn.send({ type: 'UPDATE_NAME', name: customMyName });
                 }
+                showNotification(`對手已加入！(${protocolName})`);
             };
 
-            let peerCreatedSuccess = false;
+            // 防線 1: 本地廣播 (同機分頁用)
+            const { bc, connAdapter: bcConn } = createBroadcastConn(customId, 'A');
+            bcChannel = bc;
+            bcAdapter = bcConn;
+            bcConn.on('data', (data) => {
+                if (data.type === 'BC_JOIN') handleOpponentConnected(bcConn, 'BC');
+            });
 
-            // 2. WebRTC PeerJS 連線
+            // 防線 2: MQTT 雲端中繼 (100% 穿透用)
+            const { client: mClient, connAdapter: mConn } = createMqttConn(customId, 'A');
+            mqttClient = mClient;
+            mqttAdapter = mConn;
+            mConn.on('data', (data) => {
+                if (data.type === 'MQTT_JOIN') handleOpponentConnected(mConn, 'MQTT');
+            });
+
+            // 防線 3: WebRTC P2P (傳統 P2P 用)
             try {
                 if (typeof Peer !== 'undefined') {
                     peer = new Peer(fullPeerId, RTC_CONFIG);
-
-                    peer.on('open', (id) => {
-                        peerCreatedSuccess = true;
-                        updateLobbyRoleUI();
-                        showScreen('lobby-screen');
-                        if (homeStatus) homeStatus.innerText = '';
-                        start10MinEmptyRoomTimer();
-                    });
-
                     peer.on('connection', (connection) => {
-                        conn = connection;
-                        isOpponentConnected = true;
-                        if (emptyRoomTimer) { clearTimeout(emptyRoomTimer); emptyRoomTimer = null; }
-                        
-                        setupConnection();
-                        document.getElementById('opp-ready-status').innerText = '已連線，未準備';
-                        document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
-                        document.getElementById('btn-ready').disabled = false;
-
-                        if (customMyName) {
-                            conn.send({ type: 'UPDATE_NAME', name: customMyName });
-                        }
+                        connection.on('data', (data) => {
+                            if (data.type === 'WEBRTC_JOIN') handleOpponentConnected(connection, 'WebRTC');
+                        });
                     });
-
-                    peer.on('error', (err) => {
-                        console.warn('PeerJS notice:', err);
-                        if (!peerCreatedSuccess) {
-                            peerCreatedSuccess = true;
-                            updateLobbyRoleUI();
-                            showScreen('lobby-screen');
-                            if (homeStatus) homeStatus.innerText = '';
-                            start10MinEmptyRoomTimer();
-                            showNotification('已啟動中繼頻道，房間可正常連線！', 'warning');
-                        }
-                    });
-                } else {
-                    throw new Error("PeerJS SDK unavailable");
                 }
-            } catch(e) {
-                console.warn('PeerJS Exception:', e);
-                peerCreatedSuccess = true;
-                updateLobbyRoleUI();
-                showScreen('lobby-screen');
-                if (homeStatus) homeStatus.innerText = '';
-                start10MinEmptyRoomTimer();
-            }
-
-            // 3. 逾時保底 (2.5 秒)
-            createTimeoutTimer = setTimeout(() => {
-                if (!peerCreatedSuccess) {
-                    peerCreatedSuccess = true;
-                    updateLobbyRoleUI();
-                    showScreen('lobby-screen');
-                    if (homeStatus) homeStatus.innerText = '';
-                    start10MinEmptyRoomTimer();
-                }
-            }, 2500);
+            } catch(e) { }
         }
 
+        // --- 多重競速 P2P 網路連線邏輯 (加入端) ---
         function joinRoom() {
             const inputEl = document.getElementById('join-room-id');
             const roomId = inputEl ? inputEl.value.trim().toUpperCase() : '';
@@ -1033,92 +1069,71 @@
             myRole = 'B';
 
             const homeStatus = document.getElementById('home-status');
-            if (homeStatus) homeStatus.innerText = `正在連線至房間 ${roomId}...`;
+            if (homeStatus) homeStatus.innerText = `正在進行多重智慧連線...`;
 
             const fullPeerId = 'HEXCORE_ID_' + roomId;
             let connected = false;
 
-            // 1. 本地廣播連線 (BroadcastChannel)
-            const { bc, connAdapter } = createBroadcastConn(roomId, 'B');
-            bcChannel = bc;
+            // 接收房主的鎖定回應
+            const handleJoinSuccess = (establishedConn, protocolName) => {
+                if (connected) return; // 避免重複執行
+                connected = true;
+                if (joinTimeoutTimer) { clearTimeout(joinTimeoutTimer); joinTimeoutTimer = null; }
+                
+                isOpponentConnected = true;
+                conn = establishedConn;
+                setupConnection();
+                updateLobbyRoleUI();
+                
+                document.getElementById('display-room-id').innerText = roomId;
+                showScreen('lobby-screen');
+                
+                document.getElementById('opp-ready-status').innerText = `已連線 (${protocolName})`;
+                document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
+                document.getElementById('btn-ready').disabled = false;
+                if (homeStatus) homeStatus.innerText = '';
 
-            bcChannel.onmessage = (event) => {
-                if (event.data && event.data.type === 'BC_WELCOME' && !connected) {
-                    connected = true;
-                    if (joinTimeoutTimer) { clearTimeout(joinTimeoutTimer); joinTimeoutTimer = null; }
-                    isOpponentConnected = true;
-                    conn = connAdapter;
-                    setupConnection();
-                    updateLobbyRoleUI();
-                    document.getElementById('display-room-id').innerText = roomId;
-                    showScreen('lobby-screen');
-                    document.getElementById('opp-ready-status').innerText = '已連線，未準備';
-                    document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
-                    document.getElementById('btn-ready').disabled = false;
-                    if (homeStatus) homeStatus.innerText = '';
-
-                    if (customMyName) {
-                        conn.send({ type: 'UPDATE_NAME', name: customMyName });
-                    }
-                } else if (event.data && event.data.sender !== 'B' && conn === connAdapter) {
-                    if (connAdapter.emit) connAdapter.emit('data', event.data.payload);
+                if (customMyName) {
+                    conn.send({ type: 'UPDATE_NAME', name: customMyName });
                 }
             };
 
-            // 發送廣播請求
-            try {
-                bcChannel.postMessage({ type: 'BC_JOIN', sender: 'B' });
-            } catch(e) {}
+            // 防線 1: 本地廣播
+            const { bc, connAdapter: bcConn } = createBroadcastConn(roomId, 'B');
+            bcChannel = bc;
+            bcAdapter = bcConn;
+            bcConn.on('data', (data) => {
+                if (data.type === 'BC_WELCOME') handleJoinSuccess(bcConn, 'BC');
+            });
+            setTimeout(() => { try { bcConn.send({ type: 'BC_JOIN' }); } catch(e){} }, 300);
 
-            // 2. WebRTC PeerJS 連線
+            // 防線 2: MQTT 雲端中繼
+            const { client: mClient, connAdapter: mConn } = createMqttConn(roomId, 'B');
+            mqttClient = mClient;
+            mqttAdapter = mConn;
+            mConn.on('open', () => { mConn.send({ type: 'MQTT_JOIN' }); });
+            mConn.on('data', (data) => {
+                if (data.type === 'MQTT_WELCOME') handleJoinSuccess(mConn, 'MQTT');
+            });
+
+            // 防線 3: WebRTC PeerJS
             try {
                 if (typeof Peer !== 'undefined') {
                     peer = new Peer(RTC_CONFIG);
-
-                    peer.on('open', (id) => {
+                    peer.on('open', () => {
                         const peerConn = peer.connect(fullPeerId);
-
-                        peerConn.on('open', () => {
-                            if (connected) return;
-                            connected = true;
-                            if (joinTimeoutTimer) { clearTimeout(joinTimeoutTimer); joinTimeoutTimer = null; }
-                            isOpponentConnected = true;
-                            conn = peerConn;
-                            setupConnection();
-                            updateLobbyRoleUI();
-                            document.getElementById('display-room-id').innerText = roomId;
-                            showScreen('lobby-screen');
-                            
-                            document.getElementById('opp-ready-status').innerText = '已連線，未準備';
-                            document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
-                            document.getElementById('btn-ready').disabled = false;
-                            if (homeStatus) homeStatus.innerText = '';
-
-                            if (customMyName) {
-                                conn.send({ type: 'UPDATE_NAME', name: customMyName });
-                            }
+                        peerConn.on('open', () => { peerConn.send({ type: 'WEBRTC_JOIN' }); });
+                        peerConn.on('data', (data) => {
+                            if (data.type === 'WEBRTC_WELCOME') handleJoinSuccess(peerConn, 'WebRTC');
                         });
-
-                        peerConn.on('error', () => {
-                            if (!connected) {
-                                handleJoinFailed();
-                            }
-                        });
-                    });
-
-                    peer.on('error', (err) => {
-                        console.warn('PeerJS join error:', err);
                     });
                 }
-            } catch(e) {
-                console.warn('PeerJS join Exception:', e);
-            }
+            } catch(e) { }
 
+            // 保底 8 秒連線逾時判定
             joinTimeoutTimer = setTimeout(() => {
-                if (!connected) {
-                    handleJoinFailed();
-                }
-            }, 6000);
+                if (!connected) handleJoinFailed();
+            }, 8000);
         }
 
         function handleJoinFailed() {
@@ -1493,7 +1508,6 @@
             const key = `${r},${c}`;
             const cellData = boardState[key];
             const isHovered = hoveredCell && hoveredCell.r === r && hoveredCell.c === c && !cellData && (isLocalMode || getCurrentPlayer() === myRole);
-            const isLastMove = moveHistory.length > 0 && moveHistory[moveHistory.length - 1].r === r && moveHistory[moveHistory.length - 1].c === c;
 
             ctx.save();
             ctx.beginPath();
@@ -1512,14 +1526,6 @@
 
                 ctx.fillStyle = fillColor;
                 ctx.fill();
-
-                if (isLastMove) {
-                    ctx.lineWidth = Math.max(2, hexRadius * 0.18);
-                    ctx.strokeStyle = '#ffff00';
-                    ctx.shadowColor = '#ffff00';
-                    ctx.shadowBlur = 12;
-                    ctx.stroke();
-                }
 
                 ctx.shadowColor = 'rgba(0,0,0,0.8)';
                 ctx.shadowBlur = 5;
@@ -1681,7 +1687,6 @@
             boardState[key] = { color: player, step };
             moveHistory.push({ r, c, color: player, step });
 
-            playSFX('place');
             updateUI();
             drawBoard();
 
@@ -1689,7 +1694,6 @@
             if (winPath) {
                 winningPath = winPath;
                 drawBoard();
-                playSFX('win');
 
                 setTimeout(() => {
                     triggerGameOver(player, winPath);
