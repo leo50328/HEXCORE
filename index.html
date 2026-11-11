@@ -584,10 +584,6 @@
         });
 
         window.addEventListener('resize', resizeCanvas);
-        // 自訂表情與文字歷史紀錄 (上限 6 個，先進先出) 與最小化狀態
-        let customHistoryList = ['👍', '😎', '⚡', '🔥', '💀', '👏'];
-        const MAX_HISTORY = 6;
-        let isEmoteBarMinimized = false;
 
         function loadEmoteHistory() {
             try {
@@ -606,6 +602,12 @@
                 localStorage.setItem('hexcore_emotes', JSON.stringify(list));
             } catch(e) {}
         }
+
+        function openRulesModal() {
+            const modal = document.getElementById('rules-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
         }
 
         function closeRulesModal() {
@@ -1599,86 +1601,6 @@
             ctx.restore();
         }
 
-        function setupCanvasEvents() {
-            let touchStartX = 0;
-            let touchStartY = 0;
-            let isTouchMove = false;
-
-            function getEventPos(e) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                
-                let clientX, clientY;
-                if (e.touches && e.touches.length > 0) {
-                    clientX = e.touches[0].clientX;
-                    clientY = e.touches[0].clientY;
-                } else if (e.changedTouches && e.changedTouches.length > 0) {
-                    clientX = e.changedTouches[0].clientX;
-                    clientY = e.changedTouches[0].clientY;
-                } else {
-                    clientX = e.clientX;
-                    clientY = e.clientY;
-                }
-                return {
-                    x: (clientX - rect.left) * scaleX,
-                    y: (clientY - rect.top) * scaleY
-                };
-            }
-
-            function handleMove(e) {
-                const pos = getEventPos(e);
-                const found = findNearestHex(pos.x, pos.y);
-                if (found !== hoveredCell) {
-                    hoveredCell = found;
-                    drawBoard();
-                }
-            }
-
-            function handleClick(e) {
-                if (!isLocalMode && getCurrentPlayer() !== myRole) return; 
-
-                const pos = getEventPos(e);
-                const hex = findNearestHex(pos.x, pos.y);
-                if (hex) {
-                    makeMove(hex.r, hex.c, false);
-                }
-            }
-
-            canvas.addEventListener('mousemove', handleMove);
-            canvas.addEventListener('click', handleClick);
-
-            canvas.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
-                    isTouchMove = false;
-                }
-            }, { passive: true });
-
-            canvas.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 1) {
-                    const dx = Math.abs(e.touches[0].clientX - touchStartX);
-                    const dy = Math.abs(e.touches[0].clientY - touchStartY);
-                    if (dx > 10 || dy > 10) {
-                        isTouchMove = true;
-                    }
-                }
-            }, { passive: true });
-
-            canvas.addEventListener('touchend', (e) => {
-                if (!isTouchMove) {
-                    handleClick(e);
-                }
-            });
-        }
-
-        function findNearestHex(mx, my) {
-            let minDistance = Infinity;
-            let nearest = null;
-
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
         function getCanvasCoords(e) {
             const rect = canvas.getBoundingClientRect();
             if (!rect.width || !rect.height) return { x: 0, y: 0 };
@@ -1778,9 +1700,93 @@
                     }
                 }
             }
-            // Seamless hexagonal coverage without dead spots across all 121 cells
             if (nearest && minDistance <= hexRadius * 1.02) {
                 return nearest;
+            }
+            return null;
+        }
+
+        function makeMove(r, c, isRemote = false) {
+            if (winningPath) return;
+
+            const key = `${r},${c}`;
+            if (boardState[key]) return;
+
+            const currentPlayer = getCurrentPlayer();
+            if (!isRemote && !isLocalMode && currentPlayer !== myRole) return;
+
+            const step = moveHistory.length + 1;
+            boardState[key] = {
+                r, c,
+                color: currentPlayer,
+                step: step
+            };
+            moveHistory.push({ r, c, player: currentPlayer, step });
+
+            if (!isRemote && !isLocalMode && conn && conn.open) {
+                conn.send({ type: 'MOVE', r, c });
+            }
+
+            const path = checkWin(currentPlayer);
+            if (path) {
+                winningPath = path;
+                drawBoard();
+                triggerGameOver(currentPlayer, path);
+            } else {
+                updateUI();
+                drawBoard();
+            }
+        }
+
+        function checkWin(player) {
+            const queue = [];
+            const visited = new Set();
+            const parent = {};
+
+            for (let i = 0; i < GRID_SIZE; i++) {
+                const r = (player === 'A') ? i : 0;
+                const c = (player === 'A') ? 0 : i;
+                const key = `${r},${c}`;
+                if (boardState[key] && boardState[key].color === player) {
+                    queue.push({ r, c });
+                    visited.add(key);
+                    parent[key] = null;
+                }
+            }
+
+            const dirs = [
+                [-1, 0], [-1, 1],
+                [0, -1], [0, 1],
+                [1, -1], [1, 0]
+            ];
+
+            while (queue.length > 0) {
+                const curr = queue.shift();
+                const currKey = `${curr.r},${curr.c}`;
+
+                if ((player === 'A' && curr.c === GRID_SIZE - 1) || (player === 'B' && curr.r === GRID_SIZE - 1)) {
+                    const path = [];
+                    let pKey = currKey;
+                    while (pKey) {
+                        const [pr, pc] = pKey.split(',').map(Number);
+                        path.unshift({ r: pr, c: pc });
+                        pKey = parent[pKey];
+                    }
+                    return path;
+                }
+
+                for (const [dr, dc] of dirs) {
+                    const nr = curr.r + dr;
+                    const nc = curr.c + dc;
+                    if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+                        const nKey = `${nr},${nc}`;
+                        if (!visited.has(nKey) && boardState[nKey] && boardState[nKey].color === player) {
+                            visited.add(nKey);
+                            parent[nKey] = currKey;
+                            queue.push({ r: nr, c: nc });
+                        }
+                    }
+                }
             }
             return null;
         }
