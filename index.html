@@ -211,6 +211,19 @@
         <span id="toast-msg">輪到 A 的回合！</span>
     </div>
 
+    <!-- 和局申請 MODAL -->
+    <div id="draw-modal" style="display: none;" class="fixed inset-0 bg-black/80 backdrop-blur-md items-center justify-center z-50 p-4">
+        <div class="glass-panel p-6 max-w-sm w-full flex flex-col items-center text-center border-t-4 border-yellow-400 my-auto">
+            <span class="text-3xl mb-2">🤝</span>
+            <h3 class="text-lg font-bold text-white mb-2 font-['Noto_Sans_TC']">提和請求</h3>
+            <p id="draw-modal-msg" class="text-xs text-gray-300 mb-6">對手向您提出了和局申請，是否同意？</p>
+            <div class="flex gap-3 w-full">
+                <button onclick="respondDraw(false)" class="cyber-btn cyber-btn-neutral w-1/2 py-2 text-xs">拒絕</button>
+                <button onclick="respondDraw(true)" class="cyber-btn w-1/2 py-2 text-xs">同意和局</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 規則說明 MODAL -->
     <div id="rules-modal" style="display: none;" class="fixed inset-0 bg-black/80 backdrop-blur-md items-center justify-center z-50 p-3 sm:p-6">
         <div class="glass-panel p-5 sm:p-8 max-w-lg w-full max-h-[90vh] flex flex-col items-center border-t-4 border-cyan-400 my-auto overflow-hidden">
@@ -219,8 +232,8 @@
             <div class="text-left text-xs sm:text-sm text-gray-200 space-y-3 mb-5 font-medium leading-relaxed overflow-y-auto max-h-[60vh] pr-2 w-full">
                 <div class="p-3 bg-black/40 border border-cyan-500/30 rounded-lg">
                     <h3 class="font-bold text-cyan-400 mb-1">🎯 勝負目標</h3>
-                    <p>• <span class="text-cyan-400 font-bold">A方 (藍棋)</span>：連結棋盤【最左側 ➔ 最右側】連成一條不中斷的通路即獲勝。</p>
-                    <p>• <span class="text-pink-400 font-bold">B方 (紅棋)</span>：連結棋盤【最頂端 ➔ 最底端】連成一條不中斷的通路即獲勝。</p>
+                    <p>• <span class="text-cyan-400 font-bold">A方 (藍棋)</span>：連通【左側 ↔ 右側】兩端邊界（路線雙向皆可，蜿蜒不限），形成不中斷通路即獲勝。</p>
+                    <p>• <span class="text-pink-400 font-bold">B方 (紅棋)</span>：連通【頂端 ↔ 底端】兩端邊界（路線雙向皆可，蜿蜒不限），形成不中斷通路即獲勝。</p>
                 </div>
 
                 <div class="p-3 bg-black/40 border border-purple-500/30 rounded-lg">
@@ -295,12 +308,22 @@
             </div>
 
             <!-- 多人連線專屬：設定/修改暱稱 (限制10字內) -->
-            <div class="w-full mb-4 text-left bg-black/40 border border-purple-500/40 p-3.5 rounded-xl">
+            <div class="w-full mb-3 text-left bg-black/40 border border-purple-500/40 p-3 rounded-xl">
                 <div class="flex justify-between items-center mb-1.5">
                     <label class="text-xs text-purple-300 font-bold font-['Share_Tech_Mono'] tracking-wider">👤 設定玩家名稱 (限制 10 字)</label>
                     <span id="name-char-count" class="text-xs text-purple-400/80 font-['Share_Tech_Mono']">0/10</span>
                 </div>
                 <input type="text" id="lobby-name-input" maxlength="10" placeholder="請輸入你的暱稱 (最多10字)" oninput="updateMyName(this.value)" class="w-full bg-black/60 border border-purple-400/50 text-purple-200 p-2.5 rounded font-['Chakra_Petch'] outline-none focus:border-purple-400 text-sm tracking-wide">
+            </div>
+
+            <!-- 賽制選擇 (BO1 / BO3 / BO5) -->
+            <div class="w-full mb-4 bg-black/40 border border-slate-700 p-3 rounded-xl flex items-center justify-between">
+                <span class="text-xs text-cyan-300 font-bold font-['Share_Tech_Mono']">🏆 對戰賽制選擇:</span>
+                <select id="bo-select" onchange="changeMatchFormat(this.value)" class="bg-slate-900 border border-slate-700 text-cyan-400 font-bold text-xs p-1.5 rounded outline-none cursor-pointer">
+                    <option value="1">自由單局 (BO1)</option>
+                    <option value="3">三戰兩勝 (BO3)</option>
+                    <option value="5">五戰三勝 (BO5)</option>
+                </select>
             </div>
 
             <!-- 本機玩家與對手玩家 標籤與顏色對應 -->
@@ -345,20 +368,47 @@
     <!-- 3. GAME PLAY SCREEN -->
     <div id="game-screen" class="screen flex-col items-center justify-start py-1 sm:py-3 px-1 sm:px-4 w-full min-h-screen overflow-x-hidden overflow-y-auto max-w-5xl relative z-10">
         <!-- Top Status Bar -->
-        <div class="w-full max-w-[840px] px-2.5 py-1.5 sm:px-4 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 border border-slate-700/60 rounded-xl bg-[#0c1222]/90 backdrop-blur-md shadow-lg flex-shrink-0 sticky top-1 sm:top-2 z-20">
-            <!-- Turn Status Indicator -->
-            <div class="flex items-center space-x-1.5 sm:space-x-3 min-w-0">
-                <span id="ui-turn-dot" class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0"></span>
-                <span id="ui-turn-text" class="text-[11px] sm:text-sm md:text-base font-bold tracking-wider text-gray-100 truncate font-['Chakra_Petch','Orbitron']">
-                    等待對局開始...
-                </span>
+        <div class="w-full max-w-[840px] px-2.5 py-2 sm:px-4 sm:py-2.5 flex flex-col gap-1.5 border border-slate-700/60 rounded-xl bg-[#0c1222]/90 backdrop-blur-md shadow-lg flex-shrink-0 sticky top-1 sm:top-2 z-20">
+            
+            <div class="flex items-center justify-between gap-1.5 sm:gap-2 w-full">
+                <!-- Turn Status Indicator & Scoreboard -->
+                <div class="flex items-center space-x-2 min-w-0">
+                    <span id="ui-turn-dot" class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0"></span>
+                    <span id="ui-turn-text" class="text-[11px] sm:text-sm font-bold tracking-wider text-gray-100 truncate font-['Chakra_Petch','Orbitron']">
+                        等待對局開始...
+                    </span>
+                    <span id="ui-score-board" class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded bg-black/60 border border-cyan-500/40 text-cyan-300 font-['Share_Tech_Mono']">
+                        比分 0 - 0
+                    </span>
+                </div>
+
+                <!-- 右側控制列：悔棋(單機)、提和、認輸、離開與 Ping 指示 -->
+                <div class="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
+                    <span id="ui-ping-tag" style="display: none;" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-green-400 font-['Share_Tech_Mono']">
+                        🟢 0ms
+                    </span>
+                    <button id="btn-undo" onclick="undoMove()" style="display: none;" class="px-2 py-1 rounded border border-slate-600 bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-xs font-bold text-gray-200 font-['Chakra_Petch'] cursor-pointer">
+                        ↩️ 悔棋
+                    </button>
+                    <button id="btn-draw" onclick="offerDraw()" class="px-2 py-1 rounded border border-yellow-600/60 bg-yellow-950/40 hover:bg-yellow-900/60 text-[10px] sm:text-xs font-bold text-yellow-300 font-['Chakra_Petch'] cursor-pointer">
+                        🤝 提和
+                    </button>
+                    <button id="btn-surrender" onclick="surrenderMatch()" class="px-2 py-1 rounded border border-red-600/60 bg-red-950/40 hover:bg-red-900/60 text-[10px] sm:text-xs font-bold text-red-300 font-['Chakra_Petch'] cursor-pointer">
+                        🏳️ 認輸
+                    </button>
+                    <button id="top-return-btn" onclick="returnToLobbyOrHome()" class="px-2 py-1 rounded border border-slate-600/80 bg-slate-800/80 hover:bg-slate-700 text-[10px] sm:text-xs font-bold text-gray-200 font-['Chakra_Petch'] cursor-pointer hover:text-cyan-400">
+                        離開
+                    </button>
+                </div>
             </div>
 
-            <!-- 控制列：離開對局 -->
-            <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                <button id="top-return-btn" onclick="returnToLobbyOrHome()" class="px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-lg border border-slate-600/80 bg-slate-800/80 hover:bg-slate-700 text-[10px] sm:text-xs font-bold text-gray-200 tracking-wider font-['Chakra_Petch'] transition-colors shadow-sm cursor-pointer hover:text-cyan-400">
-                    離開對局
-                </button>
+            <!-- 60 秒動態計時倒數條 -->
+            <div id="ui-timer-row" class="w-full flex items-center gap-2 pt-0.5">
+                <span class="text-[10px] font-bold font-['Share_Tech_Mono'] text-gray-400 flex-shrink-0">⏱️ 回合計時</span>
+                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-700/80 relative">
+                    <div id="ui-timer-bar" class="bg-cyan-400 h-full w-full transition-all duration-1000 ease-linear shadow-[0_0_8px_#00f3ff]"></div>
+                </div>
+                <span id="ui-timer-text" class="text-[10px] font-bold font-['Share_Tech_Mono'] text-cyan-400 w-8 text-right flex-shrink-0">60s</span>
             </div>
         </div>
 
@@ -555,6 +605,18 @@
         let hoveredCell = null;
         let lastNotifiedTurnPlayer = null; 
 
+        // 賽制、比分與回合計時器狀態
+        let matchFormat = 1; // 1: BO1, 3: BO3, 5: BO5
+        let scoreA = 0;
+        let scoreB = 0;
+        let turnTimeLeft = 60;
+        let turnTimerInterval = null;
+
+        // Ping 延遲檢測
+        let pingInterval = null;
+        let pingStartTime = 0;
+        let pingMs = 0;
+
         // 自訂表情與文字歷史紀錄 (上限 6 個，先進先出) 與最小化狀態
         let customHistoryList = ['👍', '😎', '⚡', '🔥', '💀', '👏'];
         const MAX_HISTORY = 6;
@@ -587,14 +649,14 @@
 
         function loadEmoteHistory() {
             try {
-                const saved = localStorage.getItem('hexcore_emotes');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        customHistoryList = parsed.slice(0, MAX_HISTORY);
+                const stored = localStorage.getItem('hexcore_emotes');
+                if (stored) {
+                    const list = JSON.parse(stored);
+                    if (Array.isArray(list) && list.length > 0) {
+                        customHistoryList = list;
                     }
                 }
-            } catch(e) {}
+            } catch (e) {}
         }
 
         function saveEmoteHistory(list) {
@@ -603,10 +665,235 @@
             } catch(e) {}
         }
 
-        function openRulesModal() {
-            const modal = document.getElementById('rules-modal');
-            if (modal) {
-                modal.style.display = 'flex';
+        function getCurrentPlayer() {
+            const step = moveHistory.length + 1;
+            let currentSum = 0;
+            let patternIndex = 0;
+            let active = firstPlayer;
+            while (true) {
+                currentSum += TURN_PATTERN[patternIndex];
+                if (step <= currentSum) {
+                    return active;
+                }
+                patternIndex = (patternIndex + 1) % TURN_PATTERN.length;
+                active = (active === 'A') ? 'B' : 'A';
+            }
+        }
+
+        function getRemainingInTurn() {
+            const step = moveHistory.length + 1;
+            let currentSum = 0;
+            let patternIndex = 0;
+            while (true) {
+                currentSum += TURN_PATTERN[patternIndex];
+                if (step <= currentSum) {
+                    return currentSum - step + 1;
+                }
+                patternIndex = (patternIndex + 1) % TURN_PATTERN.length;
+            }
+        }
+
+        function updateUI() {
+            const curPlayer = getCurrentPlayer();
+            const remaining = getRemainingInTurn();
+            const displayName = getPlayerDisplayName(curPlayer);
+
+            const dot = document.getElementById('ui-turn-dot');
+            const text = document.getElementById('ui-turn-text');
+
+            if (dot) {
+                if (curPlayer === 'A') {
+                    dot.className = "w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-cyan-400 inline-block shadow-[0_0_12px_#00f3ff] flex-shrink-0";
+                } else {
+                    dot.className = "w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0";
+                }
+            }
+
+            if (text) {
+                text.innerText = `${displayName} 回合 (剩餘 ${remaining} 下)`;
+            }
+
+            if (lastNotifiedTurnPlayer !== curPlayer) {
+                lastNotifiedTurnPlayer = curPlayer;
+                if (!winningPath) {
+                    triggerTurnToast(curPlayer);
+                }
+            }
+        }
+
+        function changeMatchFormat(val) {
+            matchFormat = parseInt(val, 10) || 1;
+            if (!isLocalMode && conn && conn.open && myRole === 'A') {
+                conn.send({ type: 'MATCH_FORMAT', format: matchFormat });
+            }
+        }
+
+        function updateScoreUI() {
+            const el = document.getElementById('ui-score-board');
+            if (el) {
+                const reqWins = Math.ceil(matchFormat / 2);
+                const formatLabel = matchFormat === 1 ? '自由對局' : `BO${matchFormat}`;
+                el.innerText = `${formatLabel} | 藍 ${scoreA} - ${scoreB} 紅 (目標${reqWins}勝)`;
+            }
+        }
+
+        function startTurnTimer() {
+            stopTurnTimer();
+            turnTimeLeft = 60;
+            updateTimerUI();
+
+            turnTimerInterval = setInterval(() => {
+                turnTimeLeft--;
+                updateTimerUI();
+
+                if (turnTimeLeft <= 0) {
+                    stopTurnTimer();
+                    handleTurnTimeout();
+                }
+            }, 1000);
+        }
+
+        function stopTurnTimer() {
+            if (turnTimerInterval) {
+                clearInterval(turnTimerInterval);
+                turnTimerInterval = null;
+            }
+        }
+
+        function updateTimerUI() {
+            const bar = document.getElementById('ui-timer-bar');
+            const text = document.getElementById('ui-timer-text');
+            const pct = Math.max(0, (turnTimeLeft / 60) * 100);
+
+            if (bar) {
+                bar.style.width = `${pct}%`;
+                if (turnTimeLeft <= 10) {
+                    bar.className = "bg-red-500 h-full transition-all duration-1000 ease-linear shadow-[0_0_8px_#ff0055]";
+                } else if (turnTimeLeft <= 25) {
+                    bar.className = "bg-amber-400 h-full transition-all duration-1000 ease-linear shadow-[0_0_8px_#f59e0b]";
+                } else {
+                    bar.className = "bg-cyan-400 h-full transition-all duration-1000 ease-linear shadow-[0_0_8px_#00f3ff]";
+                }
+            }
+            if (text) text.innerText = `${turnTimeLeft}s`;
+        }
+
+        function handleTurnTimeout() {
+            if (winningPath) return;
+
+            const curPlayer = getCurrentPlayer();
+            showNotification(`⏰ 回合超時！系統自動為 ${getPlayerDisplayName(curPlayer)} 下子`, 'warning');
+
+            // 僅由當前玩家（或單機模式）進行隨機位置補牌
+            if (isLocalMode || curPlayer === myRole) {
+                const emptyCells = [];
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        if (!boardState[`${r},${c}`]) {
+                            emptyCells.push({ r, c });
+                        }
+                    }
+                }
+                if (emptyCells.length > 0) {
+                    const pick = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                    makeMove(pick.r, pick.c, false);
+                }
+            }
+        }
+
+        function startPingCheck() {
+            stopPingCheck();
+            const pingTag = document.getElementById('ui-ping-tag');
+            if (pingTag) pingTag.style.display = isLocalMode ? 'none' : 'inline-block';
+
+            if (isLocalMode) return;
+
+            pingInterval = setInterval(() => {
+                if (conn && conn.open) {
+                    pingStartTime = Date.now();
+                    conn.send({ type: 'PING', timestamp: pingStartTime });
+                }
+            }, 3000);
+        }
+
+        function stopPingCheck() {
+            if (pingInterval) {
+                clearInterval(pingInterval);
+                pingInterval = null;
+            }
+            const pingTag = document.getElementById('ui-ping-tag');
+            if (pingTag) pingTag.style.display = 'none';
+        }
+
+        function updatePingUI(ms) {
+            const pingTag = document.getElementById('ui-ping-tag');
+            if (!pingTag) return;
+
+            if (ms < 100) {
+                pingTag.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-green-400 font-['Share_Tech_Mono']";
+                pingTag.innerText = `🟢 ${ms}ms`;
+            } else if (ms < 300) {
+                pingTag.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-yellow-400 font-['Share_Tech_Mono']";
+                pingTag.innerText = `🟡 ${ms}ms`;
+            } else {
+                pingTag.className = "text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-red-400 font-['Share_Tech_Mono']";
+                pingTag.innerText = `🔴 ${ms}ms`;
+            }
+        }
+
+        function undoMove() {
+            if (!isLocalMode || moveHistory.length === 0 || winningPath) return;
+
+            const lastMove = moveHistory.pop();
+            delete boardState[`${lastMove.r},${lastMove.c}`];
+
+            updateUI();
+            drawBoard();
+            showNotification('↩️ 已撤銷上一一手棋');
+        }
+
+        function surrenderMatch() {
+            if (winningPath) return;
+
+            const curRole = myRole || getCurrentPlayer();
+            const winnerRole = (curRole === 'A') ? 'B' : 'A';
+
+            if (!isLocalMode && conn && conn.open) {
+                conn.send({ type: 'SURRENDER', role: curRole });
+            }
+
+            showNotification(`🏳️ ${getPlayerDisplayName(curRole)} 選擇了認輸！`, 'warning');
+            triggerGameOver(winnerRole, [], true);
+        }
+
+        function offerDraw() {
+            if (winningPath) return;
+
+            if (isLocalMode) {
+                const modal = document.getElementById('draw-modal');
+                const msg = document.getElementById('draw-modal-msg');
+                if (msg) msg.innerText = "同機雙人對決：是否同意宣告本局為和局？";
+                if (modal) modal.style.display = 'flex';
+            } else {
+                if (conn && conn.open) {
+                    conn.send({ type: 'OFFER_DRAW' });
+                    showNotification('已向對手發送提和請求，等待回應...', 'warning');
+                }
+            }
+        }
+
+        function respondDraw(accepted) {
+            const modal = document.getElementById('draw-modal');
+            if (modal) modal.style.display = 'none';
+
+            if (!isLocalMode && conn && conn.open) {
+                conn.send({ type: 'RESPOND_DRAW', accepted });
+            }
+
+            if (accepted) {
+                triggerGameOver(null, [], false, true); // 和局結束
+            } else {
+                showNotification('已拒絕提和申請，繼續對局！');
             }
         }
 
@@ -614,6 +901,13 @@
             const modal = document.getElementById('rules-modal');
             if (modal) {
                 modal.style.display = 'none';
+            }
+        }
+
+        function openRulesModal() {
+            const modal = document.getElementById('rules-modal');
+            if (modal) {
+                modal.style.display = 'flex';
             }
         }
 
@@ -854,6 +1148,9 @@
         }
 
         function cleanupNetwork() {
+            stopTurnTimer();
+            stopPingCheck();
+
             if (emptyRoomTimer) { clearTimeout(emptyRoomTimer); emptyRoomTimer = null; }
             if (joinTimeoutTimer) { clearTimeout(joinTimeoutTimer); joinTimeoutTimer = null; }
             if (createTimeoutTimer) { clearTimeout(createTimeoutTimer); createTimeoutTimer = null; }
@@ -1186,11 +1483,42 @@
                     customOppName = (data.name || "").slice(0, 10);
                     updateLobbyRoleUI();
                 }
+                else if (data.type === 'MATCH_FORMAT') {
+                    matchFormat = data.format || 1;
+                    const selectEl = document.getElementById('bo-select');
+                    if (selectEl) selectEl.value = matchFormat.toString();
+                }
                 else if (data.type === 'START_TOSS') {
                     runCoinToss(data.first);
                 } 
                 else if (data.type === 'MOVE') {
                     makeMove(data.r, data.c, true);
+                }
+                else if (data.type === 'PING') {
+                    conn.send({ type: 'PONG', timestamp: data.timestamp });
+                }
+                else if (data.type === 'PONG') {
+                    pingMs = Date.now() - data.timestamp;
+                    updatePingUI(pingMs);
+                }
+                else if (data.type === 'SURRENDER') {
+                    const winnerRole = (data.role === 'A') ? 'B' : 'A';
+                    showNotification(`🏳️ 對手選擇了認輸！`);
+                    triggerGameOver(winnerRole, [], true);
+                }
+                else if (data.type === 'OFFER_DRAW') {
+                    const modal = document.getElementById('draw-modal');
+                    const msg = document.getElementById('draw-modal-msg');
+                    if (msg) msg.innerText = `對手 (${getPlayerDisplayName(myRole === 'A' ? 'B' : 'A')}) 向您提出了和局申請，是否同意？`;
+                    if (modal) modal.style.display = 'flex';
+                }
+                else if (data.type === 'RESPOND_DRAW') {
+                    if (data.accepted) {
+                        showNotification('🤝 對手同意了和局申請！');
+                        triggerGameOver(null, [], false, true);
+                    } else {
+                        showNotification('❌ 對手拒絕了提和申請！', 'warning');
+                    }
                 }
                 else if (data.type === 'EMOTE') {
                     triggerEmoteAnimation(data.emoji, data.sender);
@@ -1341,6 +1669,24 @@
                 topReturnBtn.style.display = isLocalMode ? 'block' : 'none';
             }
 
+            const undoBtn = document.getElementById('btn-undo');
+            if (undoBtn) {
+                undoBtn.style.display = isLocalMode ? 'inline-block' : 'none';
+            }
+
+            // 單機對決模式隱藏：投降、提和、賽制比分與倒數計時列
+            const drawBtn = document.getElementById('btn-draw');
+            if (drawBtn) drawBtn.style.display = isLocalMode ? 'none' : 'inline-block';
+
+            const surrenderBtn = document.getElementById('btn-surrender');
+            if (surrenderBtn) surrenderBtn.style.display = isLocalMode ? 'none' : 'inline-block';
+
+            const scoreBoard = document.getElementById('ui-score-board');
+            if (scoreBoard) scoreBoard.style.display = isLocalMode ? 'none' : 'inline-block';
+
+            const timerRow = document.getElementById('ui-timer-row');
+            if (timerRow) timerRow.style.display = isLocalMode ? 'none' : 'flex';
+
             // 單機對決模式隱藏表情快捷列，僅在網路連線對戰時顯示
             const emoteBar = document.getElementById('emote-bar');
             if (emoteBar) {
@@ -1349,56 +1695,15 @@
 
             showScreen('game-screen');
             updateUI();
+            if (!isLocalMode) updateScoreUI();
             resizeCanvas();
-        }
 
-        function getCurrentStep() {
-            return moveHistory.length + 1;
-        }
-
-        function getCurrentPlayer() {
-            const step = getCurrentStep();
-            const patternVal = TURN_PATTERN[(step - 1) % 4];
-            const secondPlayer = (firstPlayer === 'A') ? 'B' : 'A';
-            return (patternVal === 1) ? firstPlayer : secondPlayer;
-        }
-
-        function getRemainingInTurn() {
-            const m = moveHistory.length;
-            if (m === 0) return 1;
-            return (m % 2 === 1) ? 2 : 1;
-        }
-
-        function updateUI() {
-            const player = getCurrentPlayer();
-            const remaining = getRemainingInTurn();
-            
-            const dot = document.getElementById('ui-turn-dot');
-            const text = document.getElementById('ui-turn-text');
-
-            const displayName = getPlayerDisplayName(player);
-            let turnTag = "";
             if (!isLocalMode) {
-                turnTag = (player === myRole) ? " (你的回合)" : " (對手回合)";
-            }
-
-            if (player === 'A') {
-                if (dot) dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-cyan-400 inline-block shadow-[0_0_12px_#00f3ff] flex-shrink-0";
-                if (text) text.innerHTML = `輪到 <span class="text-cyan-400 font-bold">${displayName}</span>${turnTag} 下子 (剩餘 <span class="font-bold">${remaining}</span> 顆)`;
+                startTurnTimer();
+                startPingCheck();
             } else {
-                if (dot) dot.className = "w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0";
-                if (text) text.innerHTML = `輪到 <span class="text-pink-500 font-bold">${displayName}</span>${turnTag} 下子 (剩餘 <span class="font-bold">${remaining}</span> 顆)`;
-            }
-
-            if (!winningPath && lastNotifiedTurnPlayer !== player) {
-                lastNotifiedTurnPlayer = player;
-                if (!isLocalMode) {
-                    if (player === myRole) {
-                        triggerTurnToast(player);
-                    }
-                } else {
-                    triggerTurnToast(player);
-                }
+                stopTurnTimer();
+                stopPingCheck();
             }
         }
 
@@ -1730,11 +2035,15 @@
             const path = checkWin(currentPlayer);
             if (path) {
                 winningPath = path;
+                stopTurnTimer();
                 drawBoard();
                 triggerGameOver(currentPlayer, path);
             } else {
                 updateUI();
                 drawBoard();
+                if (!isLocalMode) {
+                    startTurnTimer();
+                }
             }
         }
 
@@ -1791,31 +2100,52 @@
             return null;
         }
 
-        function triggerGameOver(winner, path) {
+        function triggerGameOver(winner, path = [], isSurrender = false, isDraw = false) {
+            stopTurnTimer();
+            stopPingCheck();
+
             const modal = document.getElementById('win-modal');
             const titleEl = document.getElementById('modal-winner-title');
             const descEl = document.getElementById('modal-winner-desc');
             const actionBtn = document.getElementById('modal-action-btn');
             const homeBtn = document.getElementById('modal-home-btn');
 
-            const winnerName = getPlayerDisplayName(winner);
-
-            if (winner === 'A') {
+            if (isDraw) {
                 if (titleEl) {
-                    titleEl.innerText = `${winnerName} 獲勝！`;
-                    titleEl.className = 'text-2xl md:text-4xl font-black mb-2 text-cyan-400 font-["Chakra_Petch"] tech-glow-cyan truncate max-w-full';
+                    titleEl.innerText = '🤝 雙方握手言和！';
+                    titleEl.className = 'text-2xl md:text-4xl font-black mb-2 text-yellow-400 font-["Chakra_Petch"] truncate max-w-full';
                 }
-                if (descEl) descEl.innerText = 'SYSTEM CONNECTED: LEFT ➔ RIGHT';
+                if (descEl) descEl.innerText = 'MATCH DRAW - NO SCORE CHANGE';
             } else {
-                if (titleEl) {
-                    titleEl.innerText = `${winnerName} 獲勝！`;
-                    titleEl.className = 'text-2xl md:text-4xl font-black mb-2 text-pink-500 font-["Chakra_Petch"] tech-glow-crimson truncate max-w-full';
+                if (winner === 'A') scoreA++;
+                else if (winner === 'B') scoreB++;
+                updateScoreUI();
+
+                const winnerName = getPlayerDisplayName(winner);
+                const reqWins = Math.ceil(matchFormat / 2);
+                const isSeriesFinished = (scoreA >= reqWins || scoreB >= reqWins);
+
+                if (isSeriesFinished) {
+                    if (titleEl) {
+                        titleEl.innerText = `🏆 ${winnerName} 奪得 BO${matchFormat} 總冠軍！`;
+                        titleEl.className = winner === 'A' 
+                            ? 'text-2xl md:text-3xl font-black mb-2 text-cyan-400 font-["Chakra_Petch"] tech-glow-cyan truncate max-w-full'
+                            : 'text-2xl md:text-3xl font-black mb-2 text-pink-500 font-["Chakra_Petch"] tech-glow-crimson truncate max-w-full';
+                    }
+                    if (descEl) descEl.innerText = `最終總比分: 藍 ${scoreA} - ${scoreB} 紅`;
+                } else {
+                    if (titleEl) {
+                        titleEl.innerText = `${winnerName} 贏得本局！`;
+                        titleEl.className = winner === 'A' 
+                            ? 'text-2xl md:text-4xl font-black mb-2 text-cyan-400 font-["Chakra_Petch"] tech-glow-cyan truncate max-w-full'
+                            : 'text-2xl md:text-4xl font-black mb-2 text-pink-500 font-["Chakra_Petch"] tech-glow-crimson truncate max-w-full';
+                    }
+                    if (descEl) descEl.innerText = isSurrender ? '對手投降認輸' : (winner === 'A' ? 'SYSTEM CONNECTED: LEFT ↔ RIGHT' : 'SYSTEM CONNECTED: TOP ↔ BOTTOM');
                 }
-                if (descEl) descEl.innerText = 'SYSTEM CONNECTED: TOP ➔ BOTTOM';
             }
 
             if (isLocalMode) {
-                if (actionBtn) actionBtn.innerText = "再玩一局 RESTART";
+                if (actionBtn) actionBtn.innerText = "下一局 NEXT MATCH";
                 if (homeBtn) homeBtn.style.display = "block";
             } else {
                 if (actionBtn) actionBtn.innerText = "回到大廳 LOBBY";
@@ -1858,6 +2188,8 @@
         }
 
         function goHome() {
+            scoreA = 0;
+            scoreB = 0;
             cleanupNetwork();
             const modal = document.getElementById('win-modal');
             if (modal) modal.style.display = 'none';
