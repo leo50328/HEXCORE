@@ -237,11 +237,11 @@
                 </div>
 
                 <div class="p-3 bg-black/40 border border-purple-500/30 rounded-lg">
-                    <h3 class="font-bold text-purple-300 mb-1">🔄 特殊下法順序 (1-2-2-1)</h3>
+                    <h3 class="font-bold text-purple-300 mb-1">🔄 特殊下法順序 (1-2-2-2...)</h3>
                     <p>為平衡先手優勢，採用戰術雙下規則：</p>
                     <p>1️⃣ 先攻者第 1 手下 <span class="text-cyan-400 font-bold">1 顆</span>棋子。</p>
                     <p>2️⃣ 後攻者第 2 手可連續下 <span class="text-pink-400 font-bold">2 顆</span>棋子。</p>
-                    <p>3️⃣ 之後雙方交替每輪連續下 <span class="font-bold text-yellow-300">2 顆</span>棋子。</p>
+                    <p>3️⃣ 之後雙方交替每輪皆連續下 <span class="font-bold text-yellow-300">2 顆</span>棋子（1-2-2-2-2...）。</p>
                 </div>
 
                 <div class="p-3 bg-black/40 border border-slate-700 rounded-lg">
@@ -265,12 +265,10 @@
             <p class="text-[10px] sm:text-xs md:text-base text-cyan-300/80 tracking-[0.2em] sm:tracking-[0.3em] mb-6 sm:mb-8 font-['Share_Tech_Mono'] font-bold">11x11 NEON TACTICAL GRID</p>
 
             <div class="w-full flex flex-col space-y-3 sm:space-y-4">
-                <!-- 同機對戰選項 -->
                 <button onclick="startLocalGame()" class="cyber-btn cyber-btn-neutral w-full text-xs sm:text-sm md:text-base py-3 sm:py-3.5 font-['Chakra_Petch'] tracking-widest cursor-pointer relative z-30">
                     🎮 同機雙人對戰 (單機對決)
                 </button>
 
-                <!-- 遊戲規則按鈕 -->
                 <button onclick="openRulesModal()" class="cyber-btn cyber-btn-neutral w-full text-[11px] sm:text-xs py-2 font-['Chakra_Petch'] tracking-widest cursor-pointer text-cyan-300 border-cyan-500/40 hover:border-cyan-400">
                     ❓ 遊戲規則與勝負說明
                 </button>
@@ -281,7 +279,6 @@
                     <div class="flex-grow border-t border-slate-700"></div>
                 </div>
 
-                <!-- 網路開房與加入選項 -->
                 <button onclick="createRoom()" class="cyber-btn w-full text-xs sm:text-sm md:text-base py-3 sm:py-3.5 font-['Chakra_Petch'] tracking-widest tech-glow-white">
                     🌐 創建網路房間 (6碼 ID)
                 </button>
@@ -301,13 +298,11 @@
         <div class="glass-panel p-6 sm:p-8 max-w-md w-full flex flex-col items-center border-t-2 border-purple-500 my-auto">
             <h2 class="text-xl sm:text-2xl font-bold tracking-[0.2em] text-white mb-3 sm:mb-4 font-['Orbitron'] tech-glow-white">遊戲對戰房間</h2>
             
-            <!-- 房間 ID 卡片 -->
             <div class="bg-black/40 border border-slate-700/60 rounded-xl p-3 sm:p-4 w-full mb-4 text-center">
                 <span class="text-[10px] sm:text-xs text-gray-400 uppercase tracking-[0.2em] block mb-1 font-['Share_Tech_Mono']">房間 ID (點擊複製傳給對手)</span>
                 <span id="display-room-id" onclick="copyRoomId()" class="text-xl sm:text-2xl font-black text-cyan-400 tracking-[0.25em] font-['Share_Tech_Mono'] tech-glow-cyan cursor-pointer select-all">------</span>
             </div>
 
-            <!-- 設定/修改暱稱 -->
             <div class="w-full mb-4 text-left bg-black/40 border border-purple-500/40 p-3 rounded-xl">
                 <div class="flex justify-between items-center mb-1.5">
                     <label class="text-xs text-purple-300 font-bold font-['Share_Tech_Mono'] tracking-wider">👤 設定玩家名稱 (限制 10 字)</label>
@@ -316,7 +311,6 @@
                 <input type="text" id="lobby-name-input" maxlength="10" placeholder="請輸入你的暱稱 (最多10字)" oninput="updateMyName(this.value)" class="w-full bg-black/60 border border-purple-400/50 text-purple-200 p-2.5 rounded font-['Chakra_Petch'] outline-none focus:border-purple-400 text-sm tracking-wide">
             </div>
 
-            <!-- 本機玩家與對手玩家 標籤與顏色對應 -->
             <div class="w-full flex justify-between px-3 mb-6 bg-black/30 p-3.5 rounded-lg border border-slate-800">
                 <div class="text-left max-w-[48%]">
                     <p id="my-player-label" class="text-sm font-bold mb-1 truncate">本機玩家: <span id="my-name-display">玩家 A</span></p>
@@ -334,7 +328,6 @@
                 準備完成 READY
             </button>
 
-            <!-- 離開房間按鈕 -->
             <button onclick="goHome()" class="cyber-btn cyber-btn-neutral w-full text-xs sm:text-sm py-2.5 sm:py-3 font-['Chakra_Petch'] tracking-widest">
                 🚪 離開房間 LEAVE ROOM
             </button>
@@ -357,10 +350,8 @@
 
     <!-- 3. GAME PLAY SCREEN -->
     <div id="game-screen" class="screen flex-col items-center justify-start py-1 sm:py-3 px-1 sm:px-4 w-full min-h-screen overflow-x-hidden overflow-y-auto max-w-5xl relative z-10">
-        <!-- Top Status Bar -->
         <div class="w-full max-w-[840px] px-2.5 py-2.5 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 border border-slate-700/60 rounded-xl bg-[#0c1222]/90 backdrop-blur-md shadow-lg flex-shrink-0 sticky top-1 sm:top-2 z-20 mb-2">
             
-            <!-- Turn Status Indicator & Scoreboard -->
             <div class="flex items-center space-x-2 min-w-0">
                 <span id="ui-turn-dot" class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-pink-500 inline-block shadow-[0_0_12px_#ff0055] flex-shrink-0"></span>
                 <span id="ui-turn-text" class="text-[11px] sm:text-sm font-bold tracking-wider text-gray-100 truncate font-['Chakra_Petch','Orbitron']">
@@ -371,7 +362,6 @@
                 </span>
             </div>
 
-            <!-- 右側控制列：悔棋(單機)、提和、離開與 Ping 指示 -->
             <div class="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
                 <span id="ui-ping-tag" style="display: none;" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-green-400 font-['Share_Tech_Mono']">
                     🟢 0ms
@@ -379,7 +369,7 @@
                 <button id="btn-undo" onclick="undoMove()" style="display: none;" class="px-2 py-1 rounded border border-slate-600 bg-slate-800 hover:bg-slate-700 text-[10px] sm:text-xs font-bold text-gray-200 font-['Chakra_Petch'] cursor-pointer">
                     ↩️ 悔棋
                 </button>
-                <button id="btn-draw" onclick="offerDraw()" class="px-2 py-1 rounded border border-yellow-600/60 bg-yellow-950/40 hover:bg-yellow-900/60 text-[10px] sm:text-xs font-bold text-yellow-300 font-['Chakra_Petch'] cursor-pointer">
+                <button id="btn-draw" onclick="offerDraw()" style="display: none;" class="px-2 py-1 rounded border border-yellow-600/60 bg-yellow-950/40 hover:bg-yellow-900/60 text-[10px] sm:text-xs font-bold text-yellow-300 font-['Chakra_Petch'] cursor-pointer">
                     🤝 提和
                 </button>
                 <button id="top-return-btn" onclick="returnToLobbyOrHome()" class="px-2 py-1 rounded border border-slate-600/80 bg-slate-800/80 hover:bg-slate-700 text-[10px] sm:text-xs font-bold text-gray-200 font-['Chakra_Petch'] cursor-pointer hover:text-cyan-400">
@@ -388,9 +378,7 @@
             </div>
         </div>
 
-        <!-- 多人快捷互動表情與罐頭訊息列 -->
         <div id="emote-bar" class="w-full max-w-[840px] flex flex-col bg-black/60 border border-slate-700/80 rounded-xl backdrop-blur-md shadow-lg z-20 mb-1.5 sm:mb-2 overflow-hidden transition-all">
-            <!-- 面板頂部 -->
             <div class="flex items-center justify-between px-3 py-1.5 bg-slate-900/60 border-b border-slate-800 cursor-pointer select-none" onclick="toggleEmoteBar()">
                 <span class="text-xs text-cyan-400 font-bold font-['Share_Tech_Mono']">💬 快捷表情與訊息</span>
                 <button id="emote-toggle-btn" class="text-[10px] sm:text-xs text-slate-300 hover:text-white px-2 py-0.5 rounded bg-slate-800/90 border border-slate-700/80 transition-colors">
@@ -398,7 +386,6 @@
                 </button>
             </div>
 
-            <!-- 可摺疊內容區域 -->
             <div id="emote-content-box" class="p-2 sm:p-2.5 flex flex-col gap-2.5">
                 <div class="flex flex-wrap items-center gap-1.5">
                     <span class="text-[10px] text-gray-400 mr-1 hidden sm:inline">罐頭:</span>
@@ -411,13 +398,10 @@
                     <button onclick="sendEmote('再來一局？')" class="px-2 py-1 rounded bg-green-950/60 hover:bg-green-900/80 border border-green-500/40 text-green-300 font-bold text-xs cursor-pointer hover:scale-105 transition-all">再來一局？</button>
                 </div>
 
-                <!-- 自訂歷史與輸入列 -->
                 <div class="flex flex-wrap items-center justify-between gap-1.5 pt-1.5 border-t border-slate-800/80">
                     <div class="flex items-center gap-1.5 overflow-hidden">
                         <span class="text-[10px] text-gray-400 mr-1 hidden sm:inline">歷史:</span>
-                        <div id="custom-history-container" class="flex flex-wrap items-center gap-1.5">
-                            <!-- 動態渲染自訂歷史紀錄 -->
-                        </div>
+                        <div id="custom-history-container" class="flex flex-wrap items-center gap-1.5"></div>
                     </div>
                     
                     <div class="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-slate-800 flex-grow sm:flex-grow-0 ml-auto" onclick="event.stopPropagation()">
@@ -430,9 +414,7 @@
             </div>
         </div>
 
-        <!-- Center Interactive Parallelogram Canvas -->
         <div id="canvas-wrapper" class="relative pointer-events-auto">
-            <!-- 浮動氣泡動畫容器 -->
             <div id="emote-pop-container" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
             <canvas id="gameCanvas" class="pointer-events-auto"></canvas>
         </div>
@@ -529,6 +511,15 @@
 
     <!-- JavaScript Logic -->
     <script>
+        // DOM 快取機制 (避免重複查詢，提升效能)
+        const elCache = {};
+        function getEl(id) {
+            if (!(id in elCache)) {
+                elCache[id] = document.getElementById(id);
+            }
+            return elCache[id];
+        }
+
         const COLORS = {
             bg: '#050811',            
             cyan: '#00f3ff',          
@@ -542,7 +533,15 @@
         };
 
         const GRID_SIZE = 11;
-        const TURN_PATTERN = [1, 2, 2, 1]; // 12211221...
+
+        // 預先計算六角形的角度常數 (優化效能，避免渲染時不斷計算)
+        const hexAngles = Array.from({ length: 6 }, (_, i) => {
+            const angle = (Math.PI / 180) * (60 * i - 30);
+            return { cos: Math.cos(angle), sin: Math.sin(angle) };
+        });
+
+        // 存放預先計算的六角形中心點 (加速尋路與點擊判定)
+        let hexCenters = [];
 
         // STUN / TURN 連線伺服器配置
         const RTC_CONFIG = {
@@ -576,17 +575,14 @@
         let hoveredCell = null;
         let lastNotifiedTurnPlayer = null; 
 
-        // 比分與提和限制狀態
         let scoreA = 0;
         let scoreB = 0;
-        let hasOfferedDraw = false; // 每局遊戲每人限發起一次提和
+        let hasOfferedDraw = false; 
 
-        // Ping 延遲檢測
         let pingInterval = null;
         let pingStartTime = 0;
         let pingMs = 0;
 
-        // 自訂表情與文字歷史紀錄 (上限 6 個)
         let customHistoryList = ['👍', '😎', '⚡', '🔥', '💀', '👏'];
         const MAX_HISTORY = 6;
         let isEmoteBarMinimized = false;
@@ -596,8 +592,8 @@
         let joinRetryInterval = null;
         let isOpponentConnected = false;
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        let canvas = null;
+        let ctx = null;
 
         let hexRadius = 24;
         let hexWidth = Math.sqrt(3) * hexRadius;
@@ -606,6 +602,9 @@
         let boardOffsetY = 0;
 
         window.addEventListener('load', () => {
+            canvas = getEl('gameCanvas');
+            if (canvas) ctx = canvas.getContext('2d', { alpha: false }); // 優化：禁用透明度通道以加速底層繪製
+            
             showScreen('home-screen');
             loadEmoteHistory();
             setupCanvasEvents();
@@ -636,30 +635,15 @@
 
         function getCurrentPlayer() {
             const step = moveHistory.length + 1;
-            let currentSum = 0;
-            let patternIndex = 0;
-            let active = firstPlayer;
-            while (true) {
-                currentSum += TURN_PATTERN[patternIndex];
-                if (step <= currentSum) {
-                    return active;
-                }
-                patternIndex = (patternIndex + 1) % TURN_PATTERN.length;
-                active = (active === 'A') ? 'B' : 'A';
-            }
+            if (step === 1) return firstPlayer;
+            const turnIndex = 1 + Math.floor((step - 2) / 2);
+            return (turnIndex % 2 === 0) ? firstPlayer : (firstPlayer === 'A' ? 'B' : 'A');
         }
 
         function getRemainingInTurn() {
             const step = moveHistory.length + 1;
-            let currentSum = 0;
-            let patternIndex = 0;
-            while (true) {
-                currentSum += TURN_PATTERN[patternIndex];
-                if (step <= currentSum) {
-                    return currentSum - step + 1;
-                }
-                patternIndex = (patternIndex + 1) % TURN_PATTERN.length;
-            }
+            if (step === 1) return 1;
+            return ((step - 2) % 2 === 0) ? 2 : 1;
         }
 
         function updateUI() {
@@ -667,8 +651,8 @@
             const remaining = getRemainingInTurn();
             const displayName = getPlayerDisplayName(curPlayer);
 
-            const dot = document.getElementById('ui-turn-dot');
-            const text = document.getElementById('ui-turn-text');
+            const dot = getEl('ui-turn-dot');
+            const text = getEl('ui-turn-text');
 
             if (dot) {
                 if (curPlayer === 'A') {
@@ -700,7 +684,7 @@
         }
 
         function updateScoreUI() {
-            const el = document.getElementById('ui-score-board');
+            const el = getEl('ui-score-board');
             if (el) {
                 el.innerText = `總比分 | 藍 ${scoreA} - ${scoreB} 紅`;
             }
@@ -708,7 +692,7 @@
 
         function startPingCheck() {
             stopPingCheck();
-            const pingTag = document.getElementById('ui-ping-tag');
+            const pingTag = getEl('ui-ping-tag');
             if (pingTag) pingTag.style.display = isLocalMode ? 'none' : 'inline-block';
 
             if (isLocalMode) return;
@@ -726,12 +710,12 @@
                 clearInterval(pingInterval);
                 pingInterval = null;
             }
-            const pingTag = document.getElementById('ui-ping-tag');
+            const pingTag = getEl('ui-ping-tag');
             if (pingTag) pingTag.style.display = 'none';
         }
 
         function updatePingUI(ms) {
-            const pingTag = document.getElementById('ui-ping-tag');
+            const pingTag = getEl('ui-ping-tag');
             if (!pingTag) return;
 
             if (ms < 100) {
@@ -758,7 +742,7 @@
         }
 
         function offerDraw() {
-            if (winningPath) return;
+            if (winningPath || isLocalMode) return;
 
             if (hasOfferedDraw) {
                 showNotification('⚠️ 每局遊戲僅能提出一次和局申請！', 'warning', true);
@@ -766,28 +750,21 @@
             }
 
             hasOfferedDraw = true;
-            const drawBtn = document.getElementById('btn-draw');
+            const drawBtn = getEl('btn-draw');
             if (drawBtn) {
                 drawBtn.disabled = true;
                 drawBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 drawBtn.innerText = '🤝 提和(已用)';
             }
 
-            if (isLocalMode) {
-                const modal = document.getElementById('draw-modal');
-                const msg = document.getElementById('draw-modal-msg');
-                if (msg) msg.innerText = "同機雙人對決：是否同意宣告本局為和局？";
-                if (modal) modal.style.display = 'flex';
-            } else {
-                if (conn && conn.open) {
-                    conn.send({ type: 'OFFER_DRAW' });
-                    showNotification('已向對手發送提和請求（每局限一次），等待回應...', 'warning');
-                }
+            if (conn && conn.open) {
+                conn.send({ type: 'OFFER_DRAW' });
+                showNotification('已向對手發送提和請求（每局限一次），等待回應...', 'warning');
             }
         }
 
         function respondDraw(accepted) {
-            const modal = document.getElementById('draw-modal');
+            const modal = getEl('draw-modal');
             if (modal) modal.style.display = 'none';
 
             if (!isLocalMode && conn && conn.open) {
@@ -802,21 +779,21 @@
         }
 
         function closeRulesModal() {
-            const modal = document.getElementById('rules-modal');
+            const modal = getEl('rules-modal');
             if (modal) {
                 modal.style.display = 'none';
             }
         }
 
         function openRulesModal() {
-            const modal = document.getElementById('rules-modal');
+            const modal = getEl('rules-modal');
             if (modal) {
                 modal.style.display = 'flex';
             }
         }
 
         function setupResizeObserver() {
-            const wrapper = document.getElementById('canvas-wrapper');
+            const wrapper = getEl('canvas-wrapper');
             if (window.ResizeObserver && wrapper) {
                 const ro = new ResizeObserver(() => {
                     resizeCanvas();
@@ -827,7 +804,7 @@
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            const target = document.getElementById(id);
+            const target = getEl(id);
             if (target) {
                 target.classList.add('active');
             }
@@ -837,9 +814,9 @@
         }
 
         function showNotification(msg, role = 'cyan', isError = false) {
-            const toast = document.getElementById('turn-toast');
-            const toastMsg = document.getElementById('toast-msg');
-            const toastIcon = document.getElementById('toast-icon');
+            const toast = getEl('turn-toast');
+            const toastMsg = getEl('toast-msg');
+            const toastIcon = getEl('toast-icon');
 
             if (!toast || !toastMsg) return;
 
@@ -883,10 +860,10 @@
             let cleanVal = val.slice(0, 10);
             customMyName = cleanVal.trim();
             
-            const inputEl = document.getElementById('lobby-name-input');
+            const inputEl = getEl('lobby-name-input');
             if (inputEl) inputEl.value = cleanVal;
 
-            const countEl = document.getElementById('name-char-count');
+            const countEl = getEl('name-char-count');
             if (countEl) countEl.innerText = `${cleanVal.length}/10`;
             
             updateLobbyRoleUI();
@@ -908,7 +885,7 @@
         }
 
         function renderCustomHistory() {
-            const container = document.getElementById('custom-history-container');
+            const container = getEl('custom-history-container');
             if (!container) return;
             container.innerHTML = '';
             customHistoryList.forEach(msg => {
@@ -924,7 +901,7 @@
         }
 
         function sendCustomMsg() {
-            const input = document.getElementById('custom-msg-input');
+            const input = getEl('custom-msg-input');
             if (!input) return;
             const text = input.value.trim();
             if (!text) return;
@@ -952,8 +929,8 @@
 
         function toggleEmoteBar() {
             isEmoteBarMinimized = !isEmoteBarMinimized;
-            const contentBox = document.getElementById('emote-content-box');
-            const toggleBtn = document.getElementById('emote-toggle-btn');
+            const contentBox = getEl('emote-content-box');
+            const toggleBtn = getEl('emote-toggle-btn');
             
             if (contentBox) {
                 contentBox.style.display = isEmoteBarMinimized ? 'none' : 'flex';
@@ -973,7 +950,7 @@
         }
 
         function triggerEmoteAnimation(emoji, senderRole) {
-            const container = document.getElementById('emote-pop-container');
+            const container = getEl('emote-pop-container');
             const senderName = getPlayerDisplayName(senderRole);
 
             if (container) {
@@ -1001,13 +978,13 @@
         }
 
         function updateLobbyRoleUI() {
-            const myLabel = document.getElementById('my-player-label');
-            const myNameDisplay = document.getElementById('my-name-display');
-            const myBadge = document.getElementById('my-role-badge');
+            const myLabel = getEl('my-player-label');
+            const myNameDisplay = getEl('my-name-display');
+            const myBadge = getEl('my-role-badge');
             
-            const oppLabel = document.getElementById('opp-player-label');
-            const oppNameDisplay = document.getElementById('opp-name-display');
-            const oppBadge = document.getElementById('opp-role-badge');
+            const oppLabel = getEl('opp-player-label');
+            const oppNameDisplay = getEl('opp-name-display');
+            const oppBadge = getEl('opp-role-badge');
 
             const defaultMyStr = (myRole === 'A') ? '玩家 A' : '玩家 B';
             const defaultOppStr = (myRole === 'A') ? '玩家 B' : '玩家 A';
@@ -1087,11 +1064,10 @@
             bcAdapter = null;
             mqttAdapter = null;
 
-            const homeStatus = document.getElementById('home-status');
+            const homeStatus = getEl('home-status');
             if (homeStatus) homeStatus.innerText = '';
         }
 
-        // 1. 同裝置極速 BroadcastChannel 連線適應器
         function createBroadcastConn(roomId, role) {
             const channelName = 'HEXCORE_BC_' + roomId;
             const bc = new BroadcastChannel(channelName);
@@ -1102,9 +1078,7 @@
                 isBroadcast: true,
                 type: 'BC',
                 send: function(data) {
-                    try {
-                        bc.postMessage({ sender: role, payload: data });
-                    } catch(e) {}
+                    try { bc.postMessage({ sender: role, payload: data }); } catch(e) {}
                 },
                 on: function(event, callback) {
                     if (!listeners[event]) listeners[event] = [];
@@ -1129,7 +1103,6 @@
             return { bc, connAdapter: connectionObj };
         }
 
-        // 2. 高相容性 MQTT WebSockets 雲端中繼適應器
         function createMqttConn(roomId, role) {
             const topicBase = 'HEXCORE_ROOM_' + roomId;
             const myTopic = topicBase + '/' + role;
@@ -1207,7 +1180,6 @@
             }, 600000);
         }
 
-        // --- 同機雙人對戰模式 ---
         function startLocalGame() {
             cleanupNetwork();
             isLocalMode = true;
@@ -1215,7 +1187,6 @@
             runCoinToss(first);
         }
 
-        // --- 房主創建房間 ---
         function createRoom() {
             cleanupNetwork();
             isLocalMode = false;
@@ -1224,13 +1195,12 @@
             const fullPeerId = 'HEXCORE_ID_' + customId;
 
             myRole = 'A';
-            document.getElementById('display-room-id').innerText = customId;
+            getEl('display-room-id').innerText = customId;
 
             updateLobbyRoleUI();
             showScreen('lobby-screen');
             start10MinEmptyRoomTimer();
 
-            // 多重通道連線處理
             const handleOpponentConnected = (newConn, protocolName) => {
                 if (isOpponentConnected) return; 
                 isOpponentConnected = true;
@@ -1243,9 +1213,9 @@
                 else if (protocolName === 'MQTT') conn.send({ type: 'MQTT_WELCOME' });
                 else if (protocolName === 'WebRTC') conn.send({ type: 'WEBRTC_WELCOME' });
 
-                document.getElementById('opp-ready-status').innerText = `已連線 (${protocolName})`;
-                document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
-                document.getElementById('btn-ready').disabled = false;
+                getEl('opp-ready-status').innerText = `已連線 (${protocolName})`;
+                getEl('opp-ready-status').className = 'text-red-500 font-bold text-xs';
+                getEl('btn-ready').disabled = false;
                 
                 if (customMyName) {
                     conn.send({ type: 'UPDATE_NAME', name: customMyName });
@@ -1253,7 +1223,6 @@
                 showNotification(`對手已成功加入對局！(${protocolName})`);
             };
 
-            // 管道 1: 本地廣播
             const { bc, connAdapter: bcConn } = createBroadcastConn(customId, 'A');
             bcChannel = bc;
             bcAdapter = bcConn;
@@ -1261,7 +1230,6 @@
                 if (data.type === 'BC_JOIN') handleOpponentConnected(bcConn, 'BC');
             });
 
-            // 管道 2: MQTT 雲端中繼
             const { client: mClient, connAdapter: mConn } = createMqttConn(customId, 'A');
             mqttClient = mClient;
             mqttAdapter = mConn;
@@ -1269,7 +1237,6 @@
                 if (data.type === 'MQTT_JOIN') handleOpponentConnected(mConn, 'MQTT');
             });
 
-            // 管道 3: WebRTC Direct P2P
             try {
                 if (typeof Peer !== 'undefined') {
                     peer = new Peer(fullPeerId, RTC_CONFIG);
@@ -1285,9 +1252,8 @@
             } catch(e) { }
         }
 
-        // --- 對手加入房間 ---
         function joinRoom() {
-            const inputEl = document.getElementById('join-room-id');
+            const inputEl = getEl('join-room-id');
             const roomId = inputEl ? inputEl.value.trim().toUpperCase() : '';
             
             if (!roomId || roomId.length !== 6) {
@@ -1299,7 +1265,7 @@
             isLocalMode = false;
             myRole = 'B';
 
-            const homeStatus = document.getElementById('home-status');
+            const homeStatus = getEl('home-status');
             if (homeStatus) homeStatus.innerText = `正在進行智慧穿透連線...`;
 
             const fullPeerId = 'HEXCORE_ID_' + roomId;
@@ -1316,12 +1282,12 @@
                 setupConnection();
                 updateLobbyRoleUI();
                 
-                document.getElementById('display-room-id').innerText = roomId;
+                getEl('display-room-id').innerText = roomId;
                 showScreen('lobby-screen');
                 
-                document.getElementById('opp-ready-status').innerText = `已連線 (${protocolName})`;
-                document.getElementById('opp-ready-status').className = 'text-red-500 font-bold text-xs';
-                document.getElementById('btn-ready').disabled = false;
+                getEl('opp-ready-status').innerText = `已連線 (${protocolName})`;
+                getEl('opp-ready-status').className = 'text-red-500 font-bold text-xs';
+                getEl('btn-ready').disabled = false;
                 if (homeStatus) homeStatus.innerText = '';
 
                 if (customMyName) {
@@ -1329,7 +1295,6 @@
                 }
             };
 
-            // 管道 1: 本地廣播
             const { bc, connAdapter: bcConn } = createBroadcastConn(roomId, 'B');
             bcChannel = bc;
             bcAdapter = bcConn;
@@ -1337,7 +1302,6 @@
                 if (data.type === 'BC_WELCOME') handleJoinSuccess(bcConn, 'BC');
             });
 
-            // 管道 2: MQTT 中繼
             const { client: mClient, connAdapter: mConn } = createMqttConn(roomId, 'B');
             mqttClient = mClient;
             mqttAdapter = mConn;
@@ -1345,7 +1309,6 @@
                 if (data.type === 'MQTT_WELCOME') handleJoinSuccess(mConn, 'MQTT');
             });
 
-            // 管道 3: WebRTC PeerJS
             let peerConn = null;
             try {
                 if (typeof Peer !== 'undefined') {
@@ -1362,7 +1325,6 @@
                 }
             } catch(e) { }
 
-            // 定時連續握手 (避免訂閱視窗時間差造成的封包遺失)
             const sendJoinPing = () => {
                 try { bcConn.send({ type: 'BC_JOIN' }); } catch(e){}
                 if (mConn.open) { try { mConn.send({ type: 'MQTT_JOIN' }); } catch(e){} }
@@ -1372,7 +1334,6 @@
             sendJoinPing();
             joinRetryInterval = setInterval(sendJoinPing, 700);
 
-            // 10 秒保底逾時判定
             joinTimeoutTimer = setTimeout(() => {
                 if (!connected) handleJoinFailed();
             }, 10000);
@@ -1385,7 +1346,7 @@
         }
 
         function copyRoomId() {
-            const text = document.getElementById('display-room-id').innerText;
+            const text = getEl('display-room-id').innerText;
             if (text === '------') return;
             navigator.clipboard.writeText(text);
             showNotification(`房間 ID (${text}) 已複製！`);
@@ -1397,7 +1358,7 @@
             conn.on('data', (data) => {
                 if (data.type === 'READY') {
                     oppReady = data.status;
-                    const statusEl = document.getElementById('opp-ready-status');
+                    const statusEl = getEl('opp-ready-status');
                     if (statusEl) {
                         statusEl.innerText = oppReady ? '已準備' : '未準備';
                         statusEl.className = oppReady ? 'text-green-400 font-bold text-xs' : 'text-red-500 font-bold text-xs';
@@ -1422,8 +1383,8 @@
                     updatePingUI(pingMs);
                 }
                 else if (data.type === 'OFFER_DRAW') {
-                    const modal = document.getElementById('draw-modal');
-                    const msg = document.getElementById('draw-modal-msg');
+                    const modal = getEl('draw-modal');
+                    const msg = getEl('draw-modal-msg');
                     if (msg) msg.innerText = `對手 (${getPlayerDisplayName(myRole === 'A' ? 'B' : 'A')}) 向您提出了和局申請，是否同意？`;
                     if (modal) modal.style.display = 'flex';
                 }
@@ -1453,13 +1414,13 @@
 
         function toggleReady() {
             myReady = !myReady;
-            const statusEl = document.getElementById('my-ready-status');
+            const statusEl = getEl('my-ready-status');
             if (statusEl) {
                 statusEl.innerText = myReady ? '已準備' : '未準備';
                 statusEl.className = myReady ? 'text-green-400 font-bold text-xs' : 'text-red-500 font-bold text-xs';
             }
 
-            const btn = document.getElementById('btn-ready');
+            const btn = getEl('btn-ready');
             if (btn) {
                 btn.className = myReady 
                     ? "cyber-btn cyber-btn-crimson w-full text-lg py-3.5 font-['Chakra_Petch'] tracking-widest mb-3"
@@ -1487,25 +1448,25 @@
             myReady = false;
             oppReady = conn && conn.open;
             
-            const myStatus = document.getElementById('my-ready-status');
+            const myStatus = getEl('my-ready-status');
             if (myStatus) {
                 myStatus.innerText = '未準備';
                 myStatus.className = 'text-red-500 font-bold text-xs';
             }
             
-            const oppStatus = document.getElementById('opp-ready-status');
+            const oppStatus = getEl('opp-ready-status');
             if (oppStatus) {
                 oppStatus.innerText = oppReady ? '已連線，未準備' : '斷線';
                 oppStatus.className = oppReady ? 'text-red-500 font-bold text-xs' : 'text-gray-500 font-bold text-xs';
             }
 
-            const btn = document.getElementById('btn-ready');
+            const btn = getEl('btn-ready');
             if (btn) {
                 btn.className = "cyber-btn w-full text-lg py-3.5 font-['Chakra_Petch'] tracking-widest tech-glow-white mb-3";
                 btn.innerText = "準備完成 READY";
             }
 
-            const modal = document.getElementById('win-modal');
+            const modal = getEl('win-modal');
             if (modal) modal.style.display = 'none';
 
             showScreen('lobby-screen');
@@ -1513,9 +1474,9 @@
 
         function runCoinToss(preDeterminedFirst) {
             showScreen('cointoss-screen');
-            const coinEl = document.getElementById('coin-element');
-            const coinText = document.getElementById('coin-text');
-            const resultText = document.getElementById('coin-result-text');
+            const coinEl = getEl('coin-element');
+            const coinText = getEl('coin-text');
+            const resultText = getEl('coin-result-text');
 
             const nameA = getPlayerDisplayName('A');
             const nameB = getPlayerDisplayName('B');
@@ -1577,31 +1538,35 @@
             lastNotifiedTurnPlayer = null;
             hasOfferedDraw = false; 
 
-            const modal = document.getElementById('win-modal');
+            const modal = getEl('win-modal');
             if (modal) modal.style.display = 'none';
 
-            const topReturnBtn = document.getElementById('top-return-btn');
+            const topReturnBtn = getEl('top-return-btn');
             if (topReturnBtn) {
                 topReturnBtn.style.display = isLocalMode ? 'block' : 'none';
             }
 
-            const undoBtn = document.getElementById('btn-undo');
+            const undoBtn = getEl('btn-undo');
             if (undoBtn) {
                 undoBtn.style.display = isLocalMode ? 'inline-block' : 'none';
             }
 
-            const drawBtn = document.getElementById('btn-draw');
+            const drawBtn = getEl('btn-draw');
             if (drawBtn) {
-                drawBtn.style.display = 'inline-block';
-                drawBtn.disabled = false;
-                drawBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                drawBtn.innerText = '🤝 提和';
+                if (isLocalMode) {
+                    drawBtn.style.display = 'none';
+                } else {
+                    drawBtn.style.display = 'inline-block';
+                    drawBtn.disabled = false;
+                    drawBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    drawBtn.innerText = '🤝 提和';
+                }
             }
 
-            const scoreBoard = document.getElementById('ui-score-board');
+            const scoreBoard = getEl('ui-score-board');
             if (scoreBoard) scoreBoard.style.display = isLocalMode ? 'none' : 'inline-block';
 
-            const emoteBar = document.getElementById('emote-bar');
+            const emoteBar = getEl('emote-bar');
             if (emoteBar) {
                 emoteBar.style.display = isLocalMode ? 'none' : 'flex';
             }
@@ -1618,9 +1583,22 @@
             }
         }
 
+        // 預先運算所有格子中心座標 (優化效能)
+        function calculateHexCenters() {
+            hexCenters = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    hexCenters[r][c] = {
+                        x: boardOffsetX + c * hexWidth + r * (hexWidth / 2),
+                        y: boardOffsetY + r * (1.5 * hexRadius)
+                    };
+                }
+            }
+        }
+
         function resizeCanvas() {
-            const wrapper = document.getElementById('canvas-wrapper');
-            if (!wrapper || !wrapper.clientWidth) return;
+            const wrapper = getEl('canvas-wrapper');
+            if (!wrapper || !wrapper.clientWidth || !canvas) return;
             
             const w = wrapper.clientWidth;
             const dpr = window.devicePixelRatio || 1;
@@ -1629,7 +1607,7 @@
             const totalHeightUnits = (GRID_SIZE * 1.5 + 4.2);
 
             const topBar = document.querySelector('#game-screen > div:first-child');
-            const emoteBar = document.getElementById('emote-bar');
+            const emoteBar = getEl('emote-bar');
             
             let usedHeight = 100;
             if (topBar) usedHeight += topBar.offsetHeight;
@@ -1658,16 +1636,17 @@
             boardOffsetX = (canvas.width - ((GRID_SIZE - 1) * 1.5 * hexWidth)) / 2;
             boardOffsetY = (canvas.height - ((GRID_SIZE - 1) * 1.5 * hexRadius)) / 2;
 
+            calculateHexCenters();
             drawBoard();
         }
 
+        // 使用快取的陣列中心，大幅減少運算
         function getHexCenter(r, c) {
-            const x = boardOffsetX + c * hexWidth + r * (hexWidth / 2);
-            const y = boardOffsetY + r * (1.5 * hexRadius);
-            return { x, y };
+            return hexCenters[r][c];
         }
 
         function drawBoard() {
+            if (!ctx) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             ctx.fillStyle = COLORS.bg;
@@ -1745,10 +1724,10 @@
 
             ctx.save();
             ctx.beginPath();
+            // 優化: 使用預先算好的 hexAngles 陣列
             for (let i = 0; i < 6; i++) {
-                const angle = (Math.PI / 180) * (60 * i - 30);
-                const px = x + hexRadius * Math.cos(angle);
-                const py = y + hexRadius * Math.sin(angle);
+                const px = x + hexRadius * hexAngles[i].cos;
+                const py = y + hexRadius * hexAngles[i].sin;
                 if (i === 0) ctx.moveTo(px, py);
                 else ctx.lineTo(px, py);
             }
@@ -1871,49 +1850,64 @@
                 }
             }
 
-            canvas.addEventListener('mousemove', handleMove);
-            canvas.addEventListener('click', handleClick);
+            if (canvas) {
+                canvas.addEventListener('mousemove', handleMove);
+                canvas.addEventListener('click', handleClick);
 
-            canvas.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
-                    isTouchMove = false;
-                }
-            }, { passive: true });
-
-            canvas.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 1) {
-                    const dx = Math.abs(e.touches[0].clientX - touchStartX);
-                    const dy = Math.abs(e.touches[0].clientY - touchStartY);
-                    if (dx > 10 || dy > 10) {
-                        isTouchMove = true;
+                canvas.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 1) {
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                        isTouchMove = false;
                     }
-                }
-            }, { passive: true });
+                }, { passive: true });
 
-            canvas.addEventListener('touchend', (e) => {
-                if (!isTouchMove) {
-                    handleClick(e);
-                }
-            });
+                canvas.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 1) {
+                        const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                        const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                        if (dx > 10 || dy > 10) {
+                            isTouchMove = true;
+                        }
+                    }
+                }, { passive: true });
+
+                canvas.addEventListener('touchend', (e) => {
+                    if (!isTouchMove) {
+                        handleClick(e);
+                    }
+                });
+            }
         }
 
+        // 尋找最近格子的效能優化 (加入 Bounding Box 快速剔除法)
         function findNearestHex(mx, my) {
-            let minDistance = Infinity;
+            if (hexCenters.length === 0) return null;
+            let minDistSq = Infinity;
             let nearest = null;
+            const threshold = hexRadius * 1.5;
+            const thresholdSq = threshold * threshold;
 
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
-                    const { x, y } = getHexCenter(r, c);
-                    const dist = Math.hypot(mx - x, my - y);
-                    if (dist < minDistance) {
-                        minDistance = dist;
+                    const { x, y } = hexCenters[r][c];
+                    
+                    const dx = Math.abs(mx - x);
+                    if (dx > threshold) continue;
+                    
+                    const dy = Math.abs(my - y);
+                    if (dy > threshold) continue;
+
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq < minDistSq) {
+                        minDistSq = distSq;
                         nearest = { r, c };
                     }
                 }
             }
-            if (nearest && minDistance <= hexRadius * 1.02) {
+            
+            const maxAllowedSq = (hexRadius * 1.02) * (hexRadius * 1.02);
+            if (nearest && minDistSq <= maxAllowedSq) {
                 return nearest;
             }
             return null;
@@ -1952,8 +1946,10 @@
             }
         }
 
+        // BFS 路徑搜尋效能優化 (使用雙指標取代 Array.shift)
         function checkWin(player) {
             const queue = [];
+            let head = 0; // O(1) 讀取指標
             const visited = new Set();
             const parent = {};
 
@@ -1974,8 +1970,8 @@
                 [1, -1], [1, 0]
             ];
 
-            while (queue.length > 0) {
-                const curr = queue.shift();
+            while (head < queue.length) {
+                const curr = queue[head++];
                 const currKey = `${curr.r},${curr.c}`;
 
                 if ((player === 'A' && curr.c === GRID_SIZE - 1) || (player === 'B' && curr.r === GRID_SIZE - 1)) {
@@ -1989,9 +1985,9 @@
                     return path;
                 }
 
-                for (const [dr, dc] of dirs) {
-                    const nr = curr.r + dr;
-                    const nc = curr.c + dc;
+                for (let i = 0; i < 6; i++) {
+                    const nr = curr.r + dirs[i][0];
+                    const nc = curr.c + dirs[i][1];
                     if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
                         const nKey = `${nr},${nc}`;
                         if (!visited.has(nKey) && boardState[nKey] && boardState[nKey].color === player) {
@@ -2008,11 +2004,11 @@
         function triggerGameOver(winner, path = [], isSurrender = false, isDraw = false) {
             stopPingCheck();
 
-            const modal = document.getElementById('win-modal');
-            const titleEl = document.getElementById('modal-winner-title');
-            const descEl = document.getElementById('modal-winner-desc');
-            const actionBtn = document.getElementById('modal-action-btn');
-            const homeBtn = document.getElementById('modal-home-btn');
+            const modal = getEl('win-modal');
+            const titleEl = getEl('modal-winner-title');
+            const descEl = getEl('modal-winner-desc');
+            const actionBtn = getEl('modal-action-btn');
+            const homeBtn = getEl('modal-home-btn');
 
             if (isDraw) {
                 if (titleEl) {
@@ -2082,7 +2078,7 @@
             scoreA = 0;
             scoreB = 0;
             cleanupNetwork();
-            const modal = document.getElementById('win-modal');
+            const modal = getEl('win-modal');
             if (modal) modal.style.display = 'none';
             showScreen('home-screen');
         }
